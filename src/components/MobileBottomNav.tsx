@@ -1,4 +1,4 @@
-import { MessageCircle } from 'lucide-react';
+import { Github, Globe, Linkedin, MessageCircle } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { BrandSeal } from '@/src/components/BrandSeal';
 import { cn } from '@/src/lib/utils';
@@ -22,6 +22,9 @@ interface MobilePageFooterProps {
 
 const SUPPORT_EMAIL = 'dofeprotech@gmail.com';
 const SUPPORT_WHATSAPP_URL = 'https://wa.me/18492618830?text=Hola%2C%20quiero%20informacion%20sobre%20Biblia%20DJ.';
+const WEBSITE_URL = 'https://dofepro.do';
+const GITHUB_URL = 'https://github.com/dofepro';
+const LINKEDIN_URL = 'https://www.linkedin.com/in/domingo-feliz-dofepro-tech';
 
 function getScrollParent(element: HTMLElement | null): HTMLElement | Window {
   let current = element?.parentElement ?? null;
@@ -154,6 +157,37 @@ export function MobilePageFooter({ className }: MobilePageFooterProps) {
           className="break-all text-inherit underline-offset-2 transition-colors hover:text-white hover:underline"
         >
           {SUPPORT_EMAIL}
+        </a>
+        <span className="text-white/30">·</span>
+        <a
+          href={WEBSITE_URL}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="Sitio web dofepro.do"
+          title="dofepro.do"
+          className="inline-flex h-6 w-6 items-center justify-center rounded-full text-inherit transition-colors hover:text-white"
+        >
+          <Globe className="h-4 w-4" aria-hidden="true" />
+        </a>
+        <a
+          href={GITHUB_URL}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="GitHub"
+          title="GitHub"
+          className="inline-flex h-6 w-6 items-center justify-center rounded-full text-inherit transition-colors hover:text-white"
+        >
+          <Github className="h-4 w-4" aria-hidden="true" />
+        </a>
+        <a
+          href={LINKEDIN_URL}
+          target="_blank"
+          rel="noreferrer"
+          aria-label="LinkedIn"
+          title="LinkedIn"
+          className="inline-flex h-6 w-6 items-center justify-center rounded-full text-inherit transition-colors hover:text-white"
+        >
+          <Linkedin className="h-4 w-4" aria-hidden="true" />
         </a>
       </div>
     </footer>
