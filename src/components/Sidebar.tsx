@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import type { Book, SidebarBookFilter } from '@/src/types';
 import { cn } from '@/src/lib/utils';
-import { ArrowLeft, Home, BookOpen, Flame, Gamepad2, Heart, Moon, Share2, Sparkles, Sun, X } from 'lucide-react';
+import { ArrowLeft, BookOpen, Flame, Gamepad2, Github, Globe, Heart, Home, Linkedin, Mail, Moon, Share2, Sparkles, Sun, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 
@@ -236,7 +236,7 @@ export function Sidebar({
             <SidebarActionRow
               icon={<ArrowLeft className="h-5 w-5" />}
               label={currentLanguage.startsWith('en') ? 'Back to portfolio' : 'Volver al portafolio'}
-              onClick={() => window.location.assign('https://dofepro.do')}
+              onClick={() => window.location.assign('https://dofepro-tech.github.io/Mi-Portafolio/')}
               isDarkMode={isDarkMode}
             />
             {onGoHome ? (
@@ -263,6 +263,21 @@ export function Sidebar({
 
         <div className={cn('border-t px-5 py-4', footerTone)}>
           <p className="text-center text-[10px] font-medium uppercase tracking-[0.22em]">© 2026 Dofepro-Tech</p>
+          <a href="mailto:dofeprotech@gmail.com" className="mt-2 flex items-center justify-center gap-1.5 text-xs hover:text-[#5aa8ff]">
+            <Mail className="h-3.5 w-3.5" />
+            dofeprotech@gmail.com
+          </a>
+          <div className="mt-3 flex items-center justify-center gap-3">
+            <a href="https://dofepro-tech.github.io/Mi-Portafolio/" aria-label="Portafolio de Dofepro" title="Portafolio de Dofepro" className="hover:text-[#5aa8ff]">
+              <Globe className="h-4 w-4" />
+            </a>
+            <a href="https://github.com/dofepro" target="_blank" rel="noreferrer" aria-label="GitHub" title="GitHub" className="hover:text-[#5aa8ff]">
+              <Github className="h-4 w-4" />
+            </a>
+            <a href="https://www.linkedin.com/in/domingo-feliz-dofepro-tech" target="_blank" rel="noreferrer" aria-label="LinkedIn" title="LinkedIn" className="hover:text-[#5aa8ff]">
+              <Linkedin className="h-4 w-4" />
+            </a>
+          </div>
         </div>
       </motion.aside>
     </>
