@@ -32,6 +32,8 @@ dotenv.config({ path: path.resolve(projectRoot, '.env') });
 
 const app = express();
 const serverStartedAt = new Date().toISOString();
+const API_BIBLE_BASE_URL = 'https://rest.api.bible/v1';
+const DEFAULT_ENGLISH_BIBLE_ID = 'de4e12af7f28f599-01';
 const explicitAllowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map((origin) => origin.trim())
@@ -384,18 +386,88 @@ const handleBibleRead: RequestHandler = async (request, response) => {
   }
 
   try {
-    const version = getBibleVersion(language);
-    const bibleResponse = await fetch(`https://bible-api.deno.dev/api/read/${version}/${encodeURIComponent(book)}/${chapter}`);
-    if (!bibleResponse.ok) {
-      throw new Error(`Bible provider returned ${bibleResponse.status}.`);
+    const apiKey = process.env.BIBLE_API_KEY;
+    const bibleId = language === 'en'
+      ? process.env.BIBLE_API_EN_BIBLE_ID || DEFAULT_ENGLISH_BIBLE_ID
+      : process.env.BIBLE_API_BIBLE_ID;
+
+    if (!apiKey || !bibleId) {
+      return sendError(response, 503, language === 'en'
+        ? 'Bible content is not configured.'
+        : 'La traducción bíblica en español todavía no está configurada.');
     }
 
-    return response.json(await bibleResponse.json());
+    const chapterId = `${getApiBibleBookId(book)}.${chapter}`;
+    const bibleResponse = await fetch(
+      `${API_BIBLE_BASE_URL}/bibles/${encodeURIComponent(bibleId)}/chapters/${encodeURIComponent(chapterId)}?content-type=json&include-notes=false&include-titles=true`,
+      { headers: { 'api-key': apiKey } },
+    );
+    if (!bibleResponse.ok) {
+      throw new Error(`API.Bible returned ${bibleResponse.status}.`);
+    }
+
+    const apiResponse = await bibleResponse.json() as { data?: { bookId?: string; number?: string; reference?: string; content?: unknown } };
+    const verses = extractApiBibleVerses(apiResponse.data?.content);
+    if (verses.length === 0) {
+      throw new Error('API.Bible returned a chapter without verses.');
+    }
+
+    return response.json({
+      testament: '',
+      name: apiResponse.data?.reference?.replace(/\s+\d+$/, '') || book,
+      num_chapters: 0,
+      chapter,
+      vers: verses,
+    });
   } catch (error) {
     console.error('Bible read route error:', error);
     return sendError(response, 502, language === 'en' ? 'Could not load this Bible chapter.' : 'No se pudo cargar este capítulo bíblico.');
   }
 };
+
+function getApiBibleBookId(bookName: string) {
+  const aliases: Record<string, string> = {
+    GENESIS: 'GEN', EXODO: 'EXO', EXODUS: 'EXO', LEVITICO: 'LEV', LEVITICUS: 'LEV',
+    NUMEROS: 'NUM', NUMBERS: 'NUM', DEUTERONOMIO: 'DEU', DEUTERONOMY: 'DEU', JOSUE: 'JOS', JOSHUA: 'JOS',
+    JUECES: 'JDG', JUDGES: 'JDG', RUT: 'RUT', RUTH: 'RUT', SALMOS: 'PSA', PSALMS: 'PSA',
+    PROVERBIOS: 'PRO', PROVERBS: 'PRO', MATEO: 'MAT', MATTHEW: 'MAT', MARCOS: 'MRK', MARK: 'MRK',
+    LUCAS: 'LUK', LUKE: 'LUK', JUAN: 'JHN', JOHN: 'JHN', HECHOS: 'ACT', ACTS: 'ACT',
+    ROMANOS: 'ROM', ROMANS: 'ROM', APOCALIPSIS: 'REV', REVELATION: 'REV',
+  };
+  const normalizedName = bookName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
+  return aliases[normalizedName] || normalizedName.replace(/[^A-Z0-9]/g, '');
+}
+
+function extractApiBibleVerses(content: unknown) {
+  const collected = new Map<number, string[]>();
+
+  const visit = (node: unknown, verseNumber?: number) => {
+    if (!node || typeof node !== 'object') {
+      return;
+    }
+
+    const item = node as { text?: unknown; attrs?: { verseId?: unknown }; items?: unknown[] };
+    const verseId = typeof item.attrs?.verseId === 'string' ? item.attrs.verseId : undefined;
+    const resolvedVerseNumber = verseId ? Number(verseId.split('.').at(-1)) : verseNumber;
+
+    if (typeof item.text === 'string' && Number.isInteger(resolvedVerseNumber)) {
+      const parts = collected.get(resolvedVerseNumber) || [];
+      parts.push(item.text);
+      collected.set(resolvedVerseNumber, parts);
+    }
+
+    item.items?.forEach((child) => visit(child, resolvedVerseNumber));
+  };
+
+  if (Array.isArray(content)) {
+    content.forEach((node) => visit(node));
+  }
+
+  return Array.from(collected.entries())
+    .map(([number, parts]) => ({ id: number, number, verse: parts.join('').replace(/\s+/g, ' ').trim() }))
+    .filter((verse) => verse.verse)
+    .sort((left, right) => left.number - right.number);
+}
 
 const handleDailyContent: RequestHandler = async (request, response) => {
   const requestedLanguage = typeof request.query.lang === 'string' ? request.query.lang : undefined;
