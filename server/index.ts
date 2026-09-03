@@ -34,6 +34,11 @@ const app = express();
 const serverStartedAt = new Date().toISOString();
 const API_BIBLE_BASE_URL = 'https://rest.api.bible/v1';
 const DEFAULT_ENGLISH_BIBLE_ID = 'de4e12af7f28f599-01';
+const RVR1909_USX_BASE_URL = 'https://raw.githubusercontent.com/BibleAquifer/ReinaValera1909/main/spa/usx';
+const RVR1909_BOOK_CODES = [
+  'GEN', 'EXO', 'LEV', 'NUM', 'DEU', 'JOS', 'JDG', 'RUT', '1SA', '2SA', '1KI', '2KI', '1CH', '2CH', 'EZR', 'NEH', 'EST', 'JOB', 'PSA', 'PRO', 'ECC', 'SNG', 'ISA', 'JER', 'LAM', 'EZK', 'DAN', 'HOS', 'JOL', 'AMO', 'OBA', 'JON', 'MIC', 'NAM', 'HAB', 'ZEP', 'HAG', 'ZEC', 'MAL', 'MAT', 'MRK', 'LUK', 'JHN', 'ACT', 'ROM', '1CO', '2CO', 'GAL', 'EPH', 'PHP', 'COL', '1TH', '2TH', '1TI', '2TI', 'TIT', 'PHM', 'HEB', 'JAS', '1PE', '2PE', '1JN', '2JN', '3JN', 'JUD', 'REV',
+];
+const rvr1909BookCache = new Map<string, Promise<string>>();
 const explicitAllowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map((origin) => origin.trim())
@@ -386,15 +391,15 @@ const handleBibleRead: RequestHandler = async (request, response) => {
   }
 
   try {
+    if (language === 'es') {
+      return response.json(await fetchRvr1909Chapter(book, chapter));
+    }
+
     const apiKey = process.env.BIBLE_API_KEY;
-    const bibleId = language === 'en'
-      ? process.env.BIBLE_API_EN_BIBLE_ID || DEFAULT_ENGLISH_BIBLE_ID
-      : process.env.BIBLE_API_BIBLE_ID;
+    const bibleId = process.env.BIBLE_API_EN_BIBLE_ID || DEFAULT_ENGLISH_BIBLE_ID;
 
     if (!apiKey || !bibleId) {
-      return sendError(response, 503, language === 'en'
-        ? 'Bible content is not configured.'
-        : 'La traducción bíblica en español todavía no está configurada.');
+      return sendError(response, 503, 'Bible content is not configured.');
     }
 
     const chapterId = `${getApiBibleBookId(book)}.${chapter}`;
@@ -424,6 +429,69 @@ const handleBibleRead: RequestHandler = async (request, response) => {
     return sendError(response, 502, language === 'en' ? 'Could not load this Bible chapter.' : 'No se pudo cargar este capítulo bíblico.');
   }
 };
+
+async function fetchRvr1909Chapter(bookName: string, chapter: number) {
+  const bookCode = getApiBibleBookId(bookName);
+  const bookIndex = RVR1909_BOOK_CODES.indexOf(bookCode);
+  if (bookIndex < 0) {
+    throw new Error(`RVR1909 does not recognize book ${bookName}.`);
+  }
+
+  const paddedBookNumber = String(bookIndex + 1).padStart(2, '0');
+  const cacheKey = `${paddedBookNumber}${bookCode}`;
+  if (!rvr1909BookCache.has(cacheKey)) {
+    rvr1909BookCache.set(cacheKey, (async () => {
+      const sourceResponse = await fetch(`${RVR1909_USX_BASE_URL}/${cacheKey}RV09.usx`);
+      if (!sourceResponse.ok) {
+        throw new Error(`RVR1909 source returned ${sourceResponse.status}.`);
+      }
+      return sourceResponse.text();
+    })().catch((error) => {
+      rvr1909BookCache.delete(cacheKey);
+      throw error;
+    }));
+  }
+
+  const usx = await rvr1909BookCache.get(cacheKey)!;
+  const chapterStart = new RegExp(`<chapter\\s+number="${chapter}"[^>]*\\/?>`, 'i');
+  const startMatch = chapterStart.exec(usx);
+  if (!startMatch || startMatch.index === undefined) {
+    throw new Error(`RVR1909 chapter ${chapter} was not found.`);
+  }
+
+  const chapterContent = usx.slice(startMatch.index + startMatch[0].length);
+  const nextChapterIndex = chapterContent.search(/<chapter\s+number="\d+"[^>]*\/>/i);
+  const chapterUsx = nextChapterIndex >= 0 ? chapterContent.slice(0, nextChapterIndex) : chapterContent;
+  const verseMatches = Array.from(chapterUsx.matchAll(/<verse\s+number="(\d+)"[^>]*\/>/gi));
+  const vers = verseMatches.map((match, index) => {
+    const contentStart = (match.index ?? 0) + match[0].length;
+    const contentEnd = index + 1 < verseMatches.length ? verseMatches[index + 1].index ?? chapterUsx.length : chapterUsx.length;
+    return {
+      id: Number(match[1]),
+      number: Number(match[1]),
+      verse: decodeUsxText(chapterUsx.slice(contentStart, contentEnd)),
+    };
+  }).filter((verse) => verse.verse);
+
+  if (vers.length === 0) {
+    throw new Error(`RVR1909 chapter ${chapter} has no verses.`);
+  }
+
+  return { testament: '', name: bookName, num_chapters: 0, chapter, vers };
+}
+
+function decodeUsxText(value: string) {
+  return value
+    .replace(/<note[\s\S]*?<\/note>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 function getApiBibleBookId(bookName: string) {
   const aliases: Record<string, string> = {
