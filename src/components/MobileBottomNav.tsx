@@ -1,5 +1,6 @@
-import { Github, Globe, Linkedin, MessageCircle, Target, Eye, Star, FileText, Shield } from 'lucide-react';
+import { ArrowUp, Github, Globe, Linkedin, MessageCircle, Target, Eye, Star, FileText, Shield } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { type AboutLegalType } from '@/src/components/AboutLegalModal';
 import { BrandSeal } from '@/src/components/BrandSeal';
 import { cn } from '@/src/lib/utils';
@@ -124,14 +125,14 @@ export function MobileBottomNav({ items, className }: MobileBottomNavProps) {
               className={cn(
                 'flex h-8 w-8 items-center justify-center rounded-2xl transition-all sm:h-9 sm:w-9',
                 item.active
-                  ? 'bg-[#165bb8] text-white shadow-[0_10px_22px_rgba(22,91,184,0.35)]'
+                  ? 'bg-[var(--primary)] text-white shadow-[0_10px_22px_rgba(var(--primary-rgb),0.35)]'
                   : 'text-inherit'
               )}
             >
               {item.icon}
             </span>
             <span className="max-w-full truncate text-center font-sans text-[9px] font-medium leading-none text-inherit sm:text-[10px]">{item.label}</span>
-            {item.active ? <span className="absolute left-1/2 top-0 h-0.5 w-6 -translate-x-1/2 rounded-full bg-[#f0c15c] sm:w-8" /> : null}
+            {item.active ? <span className="absolute left-1/2 top-0 h-0.5 w-6 -translate-x-1/2 rounded-full bg-[var(--primary)] sm:w-8" /> : null}
           </button>
         ))}
       </div>
@@ -145,17 +146,17 @@ export function MobilePageFooter({ className, onOpenAboutLegal, onOpenOpinions, 
   return (
     <footer className={cn('w-full mt-auto pt-10 pb-28 lg:pb-8', className)}>
       <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-center gap-6 px-6 text-center">
-        <div className="h-px w-full max-w-4xl bg-gradient-to-r from-transparent via-white/5 to-transparent mb-1" />
+        <div className="mb-1 h-px w-full max-w-4xl" style={{ background: 'linear-gradient(90deg, transparent, rgba(var(--primary-rgb), .45), transparent)' }} />
 
         <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 font-sans text-[10px] font-bold uppercase tracking-widest text-white/40">
-          <button onClick={() => onOpenAboutLegal?.('about')} className="hover:text-white transition-colors">{t('menu.about')}</button>
-          <button onClick={() => onOpenAboutLegal?.('mission')} className="hover:text-white transition-colors">{t('menu.mission')}</button>
-          <button onClick={() => onOpenAboutLegal?.('vision')} className="hover:text-white transition-colors">{t('menu.vision')}</button>
-          <button onClick={() => onOpenAboutLegal?.('values')} className="hover:text-white transition-colors">{t('menu.values')}</button>
-          <button onClick={() => onOpenOpinions?.()} className="hover:text-white transition-colors">Opiniones</button>
-          <button onClick={() => onOpenDictionary?.()} className="hover:text-white transition-colors">Diccionario</button>
-          <button onClick={() => onOpenAboutLegal?.('terms')} className="hover:text-white transition-colors">{t('menu.terms')}</button>
-          <button onClick={() => onOpenAboutLegal?.('privacy')} className="hover:text-white transition-colors">{t('menu.privacy')}</button>
+          <button onClick={() => onOpenAboutLegal?.('about')} className="hover:text-[var(--primary)] transition-colors">{t('menu.about')}</button>
+          <button onClick={() => onOpenAboutLegal?.('mission')} className="hover:text-[var(--primary)] transition-colors">{t('menu.mission')}</button>
+          <button onClick={() => onOpenAboutLegal?.('vision')} className="hover:text-[var(--primary)] transition-colors">{t('menu.vision')}</button>
+          <button onClick={() => onOpenAboutLegal?.('values')} className="hover:text-[var(--primary)] transition-colors">{t('menu.values')}</button>
+          <button onClick={() => onOpenOpinions?.()} className="hover:text-[var(--primary)] transition-colors">Opiniones</button>
+          <button onClick={() => onOpenDictionary?.()} className="hover:text-[var(--primary)] transition-colors">Diccionario</button>
+          <button onClick={() => onOpenAboutLegal?.('terms')} className="hover:text-[var(--primary)] transition-colors">{t('menu.terms')}</button>
+          <button onClick={() => onOpenAboutLegal?.('privacy')} className="hover:text-[var(--primary)] transition-colors">{t('menu.privacy')}</button>
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 font-sans text-[10px] font-medium tracking-wide text-white/30">
@@ -167,7 +168,7 @@ export function MobilePageFooter({ className, onOpenAboutLegal, onOpenOpinions, 
               href={SUPPORT_WHATSAPP_URL}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-1.2 transition-colors hover:text-[#25D366]"
+              className="flex items-center gap-1.2 transition-colors hover:text-[var(--primary)]"
             >
               <MessageCircle className="h-3.5 w-3.5" />
               <span>WhatsApp</span>
@@ -184,18 +185,57 @@ export function MobilePageFooter({ className, onOpenAboutLegal, onOpenOpinions, 
           <span className="hidden sm:inline opacity-20">•</span>
 
           <div className="flex items-center gap-3">
-            <a href={WEBSITE_URL} target="_blank" rel="noreferrer" title="Website" className="transition-all hover:text-white opacity-40 hover:opacity-100">
+            <a href={WEBSITE_URL} target="_blank" rel="noreferrer" title="Website" className="transition-all text-[var(--primary)] opacity-60 hover:opacity-100">
               <Globe className="h-3.5 w-3.5" />
             </a>
-            <a href={GITHUB_URL} target="_blank" rel="noreferrer" title="GitHub" className="transition-all hover:text-white opacity-40 hover:opacity-100">
+            <a href={GITHUB_URL} target="_blank" rel="noreferrer" title="GitHub" className="transition-all text-[var(--primary)] opacity-60 hover:opacity-100">
               <Github className="h-3.5 w-3.5" />
             </a>
-            <a href={LINKEDIN_URL} target="_blank" rel="noreferrer" title="LinkedIn" className="transition-all hover:text-white opacity-40 hover:opacity-100">
+            <a href={LINKEDIN_URL} target="_blank" rel="noreferrer" title="LinkedIn" className="transition-all text-[var(--primary)] opacity-60 hover:opacity-100">
               <Linkedin className="h-3.5 w-3.5" />
             </a>
           </div>
         </div>
       </div>
     </footer>
+  );
+}
+
+export function ScrollToTopButton({ targetSelector, label = 'Volver arriba' }: { targetSelector: string; label?: string }) {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    const target = document.querySelector<HTMLElement>(targetSelector);
+    if (!target) return;
+
+    const updateVisibility = () => setIsVisible(target.scrollTop > 360);
+    updateVisibility();
+    target.addEventListener('scroll', updateVisibility, { passive: true });
+    return () => target.removeEventListener('scroll', updateVisibility);
+  }, [targetSelector]);
+
+  const scrollToTop = () => {
+    document.querySelector<HTMLElement>(targetSelector)?.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  return (
+    <AnimatePresence>
+      {isVisible && (
+        <motion.button
+          type="button"
+          initial={{ opacity: 0, scale: 0.7, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.7, y: 12 }}
+          whileHover={{ scale: 1.08, y: -3 }}
+          whileTap={{ scale: 0.92 }}
+          onClick={scrollToTop}
+          aria-label={label}
+          title={label}
+          className="fixed bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] right-4 z-[55] flex h-12 w-12 items-center justify-center rounded-full border border-[var(--primary)]/40 bg-[var(--primary)] text-white shadow-[0_8px_28px_rgba(var(--primary-rgb),0.4)] transition-shadow hover:shadow-[0_12px_34px_rgba(var(--primary-rgb),0.55)] lg:bottom-6"
+        >
+          <ArrowUp className="scroll-top-arrow h-5 w-5" />
+        </motion.button>
+      )}
+    </AnimatePresence>
   );
 }

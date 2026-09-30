@@ -417,7 +417,7 @@ export function ChristianGameHub({
                 title={isDarkMode ? t('settings.change_to_light') : t('settings.change_to_dark')}
                 aria-label={isDarkMode ? t('settings.change_to_light') : t('settings.change_to_dark')}
               >
-                {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                {isDarkMode ? <Sun className="h-4 w-4 text-amber-300" /> : <Moon className="h-4 w-4 text-rose-400" />}
               </button>
               <button
                 type="button"

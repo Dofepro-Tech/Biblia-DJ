@@ -107,7 +107,7 @@ export function HelpGuideModal({ isOpen, onClose, isDarkMode }: HelpGuideModalPr
           >
             <div className="flex items-center justify-between border-b border-white/5 p-6 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#1b8be0]/20 text-[#1b8be0]">
+                <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--primary)]/20 text-[var(--primary)]">
                   <HelpCircle className="h-6 w-6" />
                 </div>
                 <div>
@@ -155,7 +155,7 @@ export function HelpGuideModal({ isOpen, onClose, isDarkMode }: HelpGuideModalPr
             <div className="p-6 border-t border-white/5 bg-black/5 shrink-0">
               <button
                 onClick={onClose}
-                className="w-full py-4 rounded-full bg-[#1b8be0] text-white font-bold uppercase tracking-widest text-xs hover:bg-[#2597eb] transition-all"
+                className="w-full py-4 rounded-full bg-[var(--primary)] text-white font-bold uppercase tracking-widest text-xs hover:bg-[var(--primary-hover)] transition-all"
               >
                 {currentLanguage.startsWith('en') ? 'Got it!' : '¡Entendido!'}
               </button>

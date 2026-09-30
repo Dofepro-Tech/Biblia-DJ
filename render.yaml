@@ -22,9 +22,21 @@ services:
         value: Biblia DJ
       - key: OPENROUTER_API_KEY
         sync: false
+      - key: BIBLE_API_KEY
+        sync: false
+      - key: BIBLE_API_ES_BIBLE_ID
+        sync: false
       - key: OPENROUTER_SITE_URL
         sync: false
       - key: APP_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: OPINIONS_SUPABASE_URL
+        sync: false
+      - key: OPINIONS_SUPABASE_SECRET_KEY
         sync: false
       - key: ALLOWED_ORIGINS
         sync: false

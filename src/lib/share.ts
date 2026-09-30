@@ -51,19 +51,62 @@ function isInternalAppUrl(value: string) {
 }
 
 export function getAppShareUrl() {
-  const envUrl = import.meta.env.VITE_APP_DOWNLOAD_URL
-    || import.meta.env.VITE_PLAY_STORE_URL
-    || import.meta.env.VITE_APP_SHARE_URL;
+  const envUrl = import.meta.env.VITE_APP_SHARE_URL
+    || import.meta.env.VITE_APP_DOWNLOAD_URL
+    || import.meta.env.VITE_PLAY_STORE_URL;
 
   if (typeof envUrl === 'string' && envUrl.trim().length > 0) {
     return envUrl.trim();
   }
 
-  if (typeof window !== 'undefined') {
-    return isInternalAppUrl(window.location.href) ? '' : window.location.href;
+  if (typeof window !== 'undefined' && window.location?.href && !isInternalAppUrl(window.location.href)) {
+    return window.location.href;
   }
 
-  return '';
+  return 'https://dofepro-tech.github.io/biblia-dj/';
+}
+
+export function getAppApkUrl() {
+  const envApkUrl = import.meta.env.VITE_APK_DOWNLOAD_URL;
+  if (typeof envApkUrl === 'string' && envApkUrl.trim().length > 0) {
+    return envApkUrl.trim();
+  }
+
+  return 'https://dofepro-tech.github.io/biblia-dj-android.apk';
+}
+
+interface BuildAppShareMessageOptions {
+  title: string;
+  message?: string;
+  webUrl?: string;
+  apkUrl?: string;
+  language?: string;
+}
+
+export function buildAppShareMessage({ title, message, webUrl, apkUrl, language = 'es' }: BuildAppShareMessageOptions) {
+  const isEn = language.startsWith('en');
+  const resolvedWeb = webUrl || getAppShareUrl();
+  const resolvedApk = apkUrl || getAppApkUrl();
+
+  if (isEn) {
+    const lines = [
+      `📖 ${title} - Bible Study & AI App`,
+      message || 'Read, listen, and study the Bible with AI.',
+      '',
+      `🌐 Web Version: ${resolvedWeb}`,
+      `📲 Download Android APK: ${resolvedApk}`,
+    ];
+    return lines.join('\n');
+  }
+
+  const lines = [
+    `📖 ${title} - Bíblia DJ con Inteligencia Artificial`,
+    message || 'Una increíble aplicación para leer, escuchar y estudiar la Biblia con IA.',
+    '',
+    `🌐 Versión Web: ${resolvedWeb}`,
+    `📲 Descargar APK directa (Android): ${resolvedApk}`,
+  ];
+  return lines.join('\n');
 }
 
 export function getReaderShareUrl(target?: ReaderShareTarget) {
@@ -135,32 +178,25 @@ export async function shareInstalledAndroidApp(options: NativeAppShareOptions): 
     return 'unsupported';
   }
 
-  // Primero intentamos compartir el enlace de descarga oficial, que es lo más útil
-  const downloadUrl = getAppShareUrl();
-  const shareData = {
-    title: options.title || 'Bíblia DJ',
-    text: options.text || 'Descarga la app de la Biblia con IA aquí:',
-    url: downloadUrl,
-  };
-
+  // Intentamos compartir directamente el archivo .APK instalado en el celular
   try {
-    // Compartimos el enlace usando el plugin estándar de Capacitor
-    await Share.share({
-      title: shareData.title,
-      text: shareData.text,
-      url: shareData.url,
-      dialogTitle: options.dialogTitle || shareData.title,
+    await NativeAppShare.shareInstalledApk({
+      title: normalizeShareField(options.title || 'Bíblia DJ'),
+      text: normalizeShareField(options.text),
+      fileName: normalizeShareField(options.fileName || 'biblia-dj-android.apk'),
+      dialogTitle: normalizeShareField(options.dialogTitle || 'Compartir App'),
     });
     return 'shared';
   } catch (error) {
-    console.error('Error sharing link, falling back to APK:', error);
-    // Si falla el enlace (raro), intentamos pasar el APK real como respaldo
+    console.error('Error sharing installed APK file directly, falling back to link share:', error);
+
+    const downloadUrl = getAppShareUrl();
     try {
-      await NativeAppShare.shareInstalledApk({
-        title: normalizeShareField(options.title),
-        text: normalizeShareField(options.text),
-        fileName: normalizeShareField(options.fileName),
-        dialogTitle: normalizeShareField(options.dialogTitle),
+      await Share.share({
+        title: options.title || 'Bíblia DJ',
+        text: options.text,
+        url: downloadUrl,
+        dialogTitle: options.dialogTitle || 'Bíblia DJ',
       });
       return 'shared';
     } catch (innerError) {

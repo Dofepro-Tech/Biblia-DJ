@@ -24,6 +24,7 @@ interface SearchHubProps {
 }
 
 type SearchTab = 'all' | 'bible' | 'dictionary' | 'strong' | 'plans';
+const SEARCH_PAGE_SIZE = 24;
 
 const SEARCH_EXAMPLES = {
   es: [
@@ -49,6 +50,10 @@ export function SearchHub({ initialQuery, onGoBack, onGoHome, onOpenReader, onOp
   const [query, setQuery] = useState(initialQuery || '');
   const [scope, setScope] = useState(currentLanguage === 'en' ? 'All' : 'Todo');
   const [results, setResults] = useState<BibleSearchResult[]>([]);
+  const [totalResults, setTotalResults] = useState(0);
+  const [resultVersion, setResultVersion] = useState<'RVR1960' | 'RVR1909' | 'KJV' | null>(null);
+  const [incompleteResults, setIncompleteResults] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -70,6 +75,8 @@ export function SearchHub({ initialQuery, onGoBack, onGoHome, onOpenReader, onOp
         loading: 'Searching across the Bible...',
         noResults: 'No matches found.',
         resultLabel: 'Results',
+        previousPage: 'Previous results',
+        nextPage: 'Next results',
       }
     : {
         title: 'Buscar',
@@ -88,11 +95,15 @@ export function SearchHub({ initialQuery, onGoBack, onGoHome, onOpenReader, onOp
         loading: 'Buscando en toda la Biblia...',
         noResults: 'No se encontraron coincidencias.',
         resultLabel: 'Resultados',
+        previousPage: 'Resultados anteriores',
+        nextPage: 'Resultados siguientes',
       };
 
   useEffect(() => {
     if (query.trim().length < 2 || (activeTab !== 'all' && activeTab !== 'bible')) {
       setResults([]);
+      setTotalResults(0);
+      setResultVersion(null);
       setIsLoading(false);
       setErrorMessage(null);
       return;
@@ -101,17 +112,24 @@ export function SearchHub({ initialQuery, onGoBack, onGoHome, onOpenReader, onOp
     let cancelled = false;
     setIsLoading(true);
     setErrorMessage(null);
+    setIncompleteResults(false);
 
     const timer = window.setTimeout(() => {
-      searchBible(query.trim(), currentLanguage, 24)
+      searchBible(query.trim(), currentLanguage, SEARCH_PAGE_SIZE, currentPage * SEARCH_PAGE_SIZE)
         .then((response) => {
           if (!cancelled) {
             setResults(response.results);
+            setTotalResults(response.total);
+            setResultVersion(response.version ?? null);
+            setIncompleteResults(Boolean(response.incomplete));
           }
         })
         .catch((error) => {
           if (!cancelled) {
             setResults([]);
+            setTotalResults(0);
+            setResultVersion(null);
+            setIncompleteResults(false);
             setErrorMessage(error instanceof Error ? error.message : copy.noResults);
           }
         })
@@ -126,7 +144,12 @@ export function SearchHub({ initialQuery, onGoBack, onGoHome, onOpenReader, onOp
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [activeTab, copy.noResults, currentLanguage, query]);
+  }, [activeTab, copy.noResults, currentLanguage, currentPage, query]);
+
+  const resultRangeStart = totalResults === 0 ? 0 : currentPage * SEARCH_PAGE_SIZE + 1;
+  const resultRangeEnd = Math.min((currentPage + 1) * SEARCH_PAGE_SIZE, totalResults);
+  const pageCount = Math.max(1, Math.ceil(totalResults / SEARCH_PAGE_SIZE));
+  const displayedVersion = resultVersion === 'RVR1909' ? 'Reina Valera 1909' : resultVersion === 'KJV' ? 'King James Version' : copy.version;
 
   const mobileNavItems = useMemo(() => ([
     { id: 'home', label: currentLanguage === 'en' ? 'Home' : 'Inicio', icon: <House className="h-5 w-5" />, onClick: onGoHome },
@@ -164,7 +187,7 @@ export function SearchHub({ initialQuery, onGoBack, onGoHome, onOpenReader, onOp
           </div>
           <div className="min-w-0">
             <p className="truncate font-serif text-[1.45rem] font-bold leading-none text-white">{copy.title}</p>
-            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#7fb8ff]">{copy.version}</p>
+            <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.22em] text-[#7fb8ff]">{displayedVersion}</p>
           </div>
         </div>
 
@@ -173,7 +196,7 @@ export function SearchHub({ initialQuery, onGoBack, onGoHome, onOpenReader, onOp
             <button
               key={tab}
               type="button"
-              onClick={() => setActiveTab(tab)}
+              onClick={() => { setActiveTab(tab); setCurrentPage(0); }}
               className={cn(
                 'rounded-full border px-3 py-2 text-[11px] font-bold uppercase tracking-[0.18em] transition-all',
                 activeTab === tab
@@ -193,14 +216,14 @@ export function SearchHub({ initialQuery, onGoBack, onGoHome, onOpenReader, onOp
           <input
             type="text"
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => { setQuery(event.target.value); setCurrentPage(0); setTotalResults(0); setResults([]); setResultVersion(null); }}
             placeholder={copy.placeholder}
             className="w-full rounded-2xl border border-white/12 bg-white/[0.04] py-3 pl-11 pr-11 text-sm text-white outline-none placeholder:text-white/38"
           />
           {query ? (
             <button
               type="button"
-              onClick={() => setQuery('')}
+              onClick={() => { setQuery(''); setCurrentPage(0); setTotalResults(0); setResults([]); setResultVersion(null); }}
               className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-white/45"
             >
               <X className="h-4 w-4" />
@@ -210,7 +233,7 @@ export function SearchHub({ initialQuery, onGoBack, onGoHome, onOpenReader, onOp
 
         <div className="mt-3 grid grid-cols-[minmax(0,1fr)_5.5rem] gap-3">
           <button type="button" className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white">
-            <span className="truncate">{copy.version}</span>
+            <span className="truncate">{displayedVersion}</span>
             <ChevronRight className="h-4 w-4 rotate-90 text-[#f0c15c]" />
           </button>
           <button type="button" className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-semibold text-white">
@@ -237,7 +260,38 @@ export function SearchHub({ initialQuery, onGoBack, onGoHome, onOpenReader, onOp
           </section>
         ) : (
           <section className="mt-4">
-            <p className="mb-3 text-[11px] font-bold uppercase tracking-[0.18em] text-[#7fb8ff]">{copy.resultLabel}</p>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-[#7fb8ff]">{copy.resultLabel}</p>
+                <p className="mt-1 text-xs text-white/65">
+                  {currentLanguage === 'en' ? `${totalResults} results found` : `${totalResults} resultados encontrados`}
+                  {totalResults > 0 ? ` · ${resultRangeStart}–${resultRangeEnd}` : ''}
+                </p>
+                {incompleteResults && <p className="mt-1 text-xs text-amber-300">{currentLanguage === 'en' ? 'Some chapters could not be loaded; these results may be incomplete.' : 'No se pudieron cargar algunos capítulos; los resultados pueden estar incompletos.'}</p>}
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((page) => Math.max(0, page - 1))}
+                  disabled={isLoading || currentPage === 0}
+                  aria-label={copy.previousPage}
+                  title={copy.previousPage}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage((page) => Math.min(pageCount - 1, page + 1))}
+                  disabled={isLoading || currentPage >= pageCount - 1}
+                  aria-label={copy.nextPage}
+                  title={copy.nextPage}
+                  className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-white transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-35"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
             <div className="space-y-3">
               {isLoading ? (
                 <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 text-sm text-white/72">{copy.loading}</div>

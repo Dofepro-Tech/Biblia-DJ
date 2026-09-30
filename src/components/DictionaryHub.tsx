@@ -76,7 +76,7 @@ export function DictionaryHub({ onGoBack, onGoHome, onOpenReader, onOpenPlans, o
               placeholder={currentLanguage === 'en' ? 'Search word...' : 'Buscar término...'}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-[#1b8be0] transition-all"
+              className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-[var(--primary)] transition-all"
             />
           </div>
         </div>
@@ -86,10 +86,10 @@ export function DictionaryHub({ onGoBack, onGoHome, onOpenReader, onOpenPlans, o
             <div className="col-span-full text-center py-20 opacity-30 italic">No se encontraron términos para "{searchTerm}".</div>
           ) : (
             filteredEntries.map(e => (
-              <div key={e.word} className="p-6 rounded-[28px] border border-white/5 bg-white/[0.03] hover:border-[#1b8be0]/20 transition-all group">
+              <div key={e.word} className="p-6 rounded-[28px] border border-white/5 bg-white/[0.03] hover:border-[var(--primary)]/20 transition-all group">
                 <div className="flex items-center gap-3 mb-3">
-                   <div className="h-9 w-9 rounded-xl bg-[#1b8be0]/10 flex items-center justify-center text-[#1b8be0]"><BookIcon className="h-5 w-5" /></div>
-                   <h3 className="text-lg font-bold group-hover:text-[#1b8be0] transition-colors">{e.word}</h3>
+                   <div className="h-9 w-9 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)]"><BookIcon className="h-5 w-5" /></div>
+                   <h3 className="text-lg font-bold group-hover:text-[var(--primary)] transition-colors">{e.word}</h3>
                 </div>
                 <p className="text-sm leading-relaxed text-white/70">{e.definition}</p>
               </div>

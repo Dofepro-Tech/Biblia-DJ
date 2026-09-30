@@ -166,22 +166,22 @@ export function Sidebar({
         className={cn('fixed inset-y-0 left-0 z-[90] flex w-[min(90vw,24rem)] flex-col overflow-hidden border-r', sidebarSurface)}
       >
         {/* Header Tabs - Estilo Bibliatodo */}
-        <div className="flex border-b border-white/5 bg-black/20">
+        <div className={cn('flex border-b', isDarkMode ? 'border-white/5 bg-black/20' : 'border-[#d8e4f2] bg-white')}>
           <button
             onClick={() => setActivePage('menu')}
-            className={cn("flex-1 py-4 text-[10px] font-bold uppercase tracking-widest transition-all", activeTab === 'menu' ? "text-[#7fb8ff] border-b-2 border-[#7fb8ff]" : "text-white/40")}
+            className={cn('flex-1 py-4 text-[10px] font-bold uppercase tracking-widest transition-all', activeTab === 'menu' ? 'text-[var(--primary)] border-b-2 border-[var(--primary)]' : isDarkMode ? 'text-white/45' : 'text-[#64748b] hover:text-[#102542]')}
           >
             Menú
           </button>
           <button
             onClick={() => setActivePage('favorites')}
-            className={cn("flex-1 py-4 text-[10px] font-bold uppercase tracking-widest transition-all", activeTab === 'favorites' ? "text-[#ff7f7f] border-b-2 border-[#ff7f7f]" : "text-white/40")}
+            className={cn('flex-1 py-4 text-[10px] font-bold uppercase tracking-widest transition-all', activeTab === 'favorites' ? 'text-[var(--primary)] border-b-2 border-[var(--primary)]' : isDarkMode ? 'text-white/45' : 'text-[#64748b] hover:text-[#102542]')}
           >
             {t('menu.favorites')}
           </button>
           <button
             onClick={() => setActivePage('settings')}
-            className={cn("flex-1 py-4 text-[10px] font-bold uppercase tracking-widest transition-all", activeTab === 'settings' ? "text-[#f6c969] border-b-2 border-[#f6c969]" : "text-white/40")}
+            className={cn('flex-1 py-4 text-[10px] font-bold uppercase tracking-widest transition-all', activeTab === 'settings' ? 'text-[var(--primary)] border-b-2 border-[var(--primary)]' : isDarkMode ? 'text-white/45' : 'text-[#64748b] hover:text-[#102542]')}
           >
             {t('menu.settings')}
           </button>
@@ -219,12 +219,12 @@ export function Sidebar({
                 <SidebarActionRow icon={<Shield className="h-5 w-5" />} label={t('menu.privacy')} onClick={() => runAndClose(() => onOpenAboutLegal?.('privacy'))} isDarkMode={isDarkMode} />
               </SidebarSection>
 
-              <div className="pt-4 border-t border-white/5">
-                <p className="px-2 text-[10px] font-bold uppercase tracking-widest text-white/30 mb-4">{menuCopy.social}</p>
+              <div className={cn('pt-4 border-t', isDarkMode ? 'border-white/5' : 'border-[#d8e4f2]')}>
+                <p className={cn('px-2 text-[10px] font-bold uppercase tracking-widest mb-4', isDarkMode ? 'text-white/45' : 'text-[#587392]')}>{menuCopy.social}</p>
                 <div className="flex gap-4 px-2">
-                  <a href="https://wa.me/18492618830" target="_blank" className="p-3 rounded-2xl bg-white/5 text-[#25D366] hover:bg-white/10 transition-all"><MessageCircle className="h-5 w-5" /></a>
-                  <a href="https://github.com/dofepro" target="_blank" className="p-3 rounded-2xl bg-white/5 text-white/60 hover:bg-white/10 transition-all"><Github className="h-5 w-5" /></a>
-                  <a href="https://www.linkedin.com/in/domingo-feliz-dofepro-tech" target="_blank" className="p-3 rounded-2xl bg-white/5 text-[#0077B5] hover:bg-white/10 transition-all"><Linkedin className="h-5 w-5" /></a>
+                  <a href="https://wa.me/18492618830" target="_blank" rel="noreferrer" aria-label="WhatsApp" className={cn('rounded-2xl p-3 transition-all', isDarkMode ? 'bg-white/5 text-[#25D366] hover:bg-white/10' : 'border border-[#d8e4f2] bg-white text-[#128c4a] hover:bg-[#edf5ff]')}><MessageCircle className="h-5 w-5" /></a>
+                  <a href="https://github.com/dofepro" target="_blank" rel="noreferrer" aria-label="GitHub" className={cn('rounded-2xl p-3 transition-all', isDarkMode ? 'bg-white/5 text-white/80 hover:bg-white/10' : 'border border-[#d8e4f2] bg-white text-[#24292f] hover:bg-[#edf5ff]')}><Github className="h-5 w-5" /></a>
+                  <a href="https://www.linkedin.com/in/domingo-feliz-dofepro-tech" target="_blank" rel="noreferrer" aria-label="LinkedIn" className={cn('rounded-2xl p-3 transition-all', isDarkMode ? 'bg-white/5 text-[#36a9e8] hover:bg-white/10' : 'border border-[#d8e4f2] bg-white text-[#0a66c2] hover:bg-[#edf5ff]')}><Linkedin className="h-5 w-5" /></a>
                 </div>
               </div>
             </div>
@@ -237,16 +237,16 @@ export function Sidebar({
                 <h3 className="font-serif text-xl font-bold uppercase">{t('menu.favorites')}</h3>
               </div>
               {bookmarks.length === 0 ? (
-                <div className="text-center py-20 italic text-white/30 font-serif">{t('verses.no_bookmarks')}</div>
+                <div className={cn('py-20 text-center font-serif italic', isDarkMode ? 'text-white/45' : 'text-[#587392]')}>{t('verses.no_bookmarks')}</div>
               ) : (
                 <div className="space-y-3">
                   {bookmarks.map(b => (
-                    <div key={b.id} className="group relative rounded-2xl border border-white/5 bg-white/[0.03] p-4 hover:border-[#ff7f7f]/30 transition-all">
+                    <div key={b.id} className={cn('group relative rounded-2xl border p-4 transition-all', isDarkMode ? 'border-white/5 bg-white/[0.03] hover:border-[#ff7f7f]/30' : 'border-[#d8e4f2] bg-white hover:border-[#d64255]/30')}>
                       <button onClick={() => { onSelectBookmark(b); closeMenu(); }} className="w-full text-left pr-8">
                         <p className="font-serif font-bold text-white mb-1">{b.label}</p>
-                        <p className="text-[10px] uppercase tracking-widest text-white/30">{new Date(b.createdAt).toLocaleDateString()}</p>
+                        <p className={cn('text-[10px] uppercase tracking-widest', isDarkMode ? 'text-white/45' : 'text-[#587392]')}>{new Date(b.createdAt).toLocaleDateString()}</p>
                       </button>
-                      <button onClick={() => onRemoveBookmark(b.id)} className="absolute right-4 top-1/2 -translate-y-1/2 p-2 text-white/20 hover:text-[#ff7f7f] transition-all"><X className="h-4 w-4" /></button>
+                      <button onClick={() => onRemoveBookmark(b.id)} className={cn('absolute right-4 top-1/2 -translate-y-1/2 p-2 transition-all', isDarkMode ? 'text-white/45 hover:text-[#ff7f7f]' : 'text-[#64748b] hover:text-[#d64255]')}><X className="h-4 w-4" /></button>
                     </div>
                   ))}
                 </div>
@@ -271,8 +271,9 @@ export function Sidebar({
                   setStartupPage={setStartupPage}
                   homeSections={homeSections}
                   setHomeSections={setHomeSections}
-                  menuClassName="static w-full shadow-none border-none bg-transparent"
-                />
+                   menuClassName="static w-full shadow-none border-none bg-transparent"
+                   inline
+                 />
              </div>
           )}
         </div>
@@ -290,7 +291,7 @@ interface SidebarSectionProps {
 function SidebarSection({ title, children, isDarkMode }: SidebarSectionProps) {
   return (
     <section className="mb-6">
-      <p className={cn('mb-2 px-2 text-[11px] font-semibold uppercase tracking-[0.22em]', isDarkMode ? 'text-[#e0a74b]' : 'text-[#b9851e]')}>{title}</p>
+      <p className={cn('mb-2 px-2 text-[11px] font-semibold uppercase tracking-[0.22em]', isDarkMode ? 'text-[#e0a74b]' : 'text-[#8c5b00]')}>{title}</p>
       <div className="space-y-2">{children}</div>
     </section>
   );
@@ -312,11 +313,11 @@ function SidebarActionRow({ icon, label, onClick, detail, isDarkMode }: SidebarA
       className={cn(
         'flex w-full items-center gap-3 rounded-[22px] border px-4 py-3 text-left transition-all',
         isDarkMode
-          ? 'border-white/8 bg-white/[0.03] hover:border-[#5aa8ff]/35 hover:bg-[#0f1f33]'
-          : 'border-[#d8e4f2] bg-white hover:border-[#5aa8ff]/35 hover:bg-[#edf5ff]'
+          ? 'border-white/8 bg-white/[0.03] hover:border-[var(--primary)]/40 hover:bg-[var(--primary)]/10'
+          : 'border-[#d8e4f2] bg-white hover:border-[var(--primary)]/40 hover:bg-[var(--primary)]/5'
       )}
     >
-      <span className={cn('flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl', isDarkMode ? 'bg-[#0f2d52] text-[#79baff]' : 'bg-[#dcebff] text-[#1a63c0]')}>
+      <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-[var(--primary)]/15 text-[var(--primary)]">
         {icon}
       </span>
       <span className="min-w-0 flex-1">

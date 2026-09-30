@@ -32,6 +32,7 @@ export function OpinionsHub({ onGoBack, onGoHome, onOpenReader, onOpenPlans, onO
   const [authorName, setAuthorName] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [requestError, setRequestError] = useState('');
 
   const fetchOpinions = async () => {
     setIsLoading(true);
@@ -40,9 +41,14 @@ export function OpinionsHub({ onGoBack, onGoHome, onOpenReader, onOpenPlans, onO
       if (res.ok) {
         const data = await res.json();
         setOpinions(data);
+        setRequestError('');
+      } else {
+        const payload = await res.json().catch(() => null);
+        setRequestError(payload?.error || (currentLanguage === 'en' ? 'Could not load opinions.' : 'No se pudieron cargar las opiniones.'));
       }
     } catch (e) {
       console.error('Fetch opinions error:', e);
+      setRequestError(currentLanguage === 'en' ? 'Could not connect to load opinions.' : 'No se pudo conectar para cargar las opiniones.');
     } finally {
       setIsLoading(false);
     }
@@ -65,10 +71,15 @@ export function OpinionsHub({ onGoBack, onGoHome, onOpenReader, onOpenPlans, onO
       });
       if (res.ok) {
         setNewOpinion('');
-        void fetchOpinions();
+        setRequestError('');
+        await fetchOpinions();
+      } else {
+        const payload = await res.json().catch(() => null);
+        setRequestError(payload?.error || (currentLanguage === 'en' ? 'Could not publish your opinion.' : 'No se pudo publicar tu opinión.'));
       }
     } catch (e) {
       console.error('Submit opinion error:', e);
+      setRequestError(currentLanguage === 'en' ? 'Could not connect to publish your opinion.' : 'No se pudo conectar para publicar tu opinión.');
     } finally {
       setIsSubmitting(false);
     }
@@ -95,28 +106,36 @@ export function OpinionsHub({ onGoBack, onGoHome, onOpenReader, onOpenPlans, onO
         {/* Formulario */}
         <div className="max-w-2xl mx-auto rounded-[32px] border border-white/10 bg-white/[0.03] p-6 shadow-xl">
            <div className="flex items-center gap-3 mb-4">
-              <MessageSquare className="h-5 w-5 text-[#1b8be0]" />
+              <MessageSquare className="h-5 w-5 text-[var(--primary)]" />
               <h3 className="font-bold">{currentLanguage === 'en' ? 'Leave your opinion' : 'Deja tu opinión'}</h3>
            </div>
+           <p className="mb-5 text-sm leading-relaxed text-white/65">
+             {currentLanguage === 'en'
+               ? 'Your feedback is important to us. We welcome corrective comments, constructive contributions, and practical suggestions that help us improve the app and the reading experience.'
+               : 'Sus opiniones son muy importantes para nosotros. Recibimos con apertura comentarios correctivos, aportes constructivos y propuestas productivas que nos ayuden a mejorar la aplicación y la experiencia de lectura.'}
+           </p>
            <form onSubmit={handleSubmit} className="space-y-4">
               <input
                 type="text"
                 placeholder={currentLanguage === 'en' ? 'Your name (optional)' : 'Tu nombre (opcional)'}
                 value={authorName}
+                maxLength={80}
                 onChange={(e) => setAuthorName(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 outline-none focus:border-[#1b8be0] transition-all text-sm"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 outline-none focus:border-[var(--primary)] transition-all text-sm"
               />
               <textarea
                 placeholder={currentLanguage === 'en' ? 'What do you think about the app or today\'s reading?' : '¿Qué piensas de la app o del pasaje de hoy?'}
                 value={newOpinion}
+                maxLength={2000}
                 onChange={(e) => setNewOpinion(e.target.value)}
                 rows={3}
-                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 outline-none focus:border-[#1b8be0] transition-all text-sm resize-none"
+                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 outline-none focus:border-[var(--primary)] transition-all text-sm resize-none"
               />
+              {requestError && <p role="alert" className="text-sm text-rose-400">{requestError}</p>}
               <button
                 type="submit"
                 disabled={isSubmitting || !newOpinion.trim()}
-                className="w-full py-3 rounded-full bg-[#1b8be0] text-white font-bold text-xs uppercase tracking-widest hover:bg-[#2597eb] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-full bg-[var(--primary)] text-white font-bold text-xs uppercase tracking-widest hover:bg-[var(--primary-hover)] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 {isSubmitting ? '...' : <><Send className="h-4 w-4" /> {currentLanguage === 'en' ? 'Post' : 'Publicar'}</>}
               </button>
@@ -133,7 +152,7 @@ export function OpinionsHub({ onGoBack, onGoHome, onOpenReader, onOpenPlans, onO
              opinions.map(o => (
                <div key={o.id} className="p-5 rounded-[26px] border border-white/5 bg-white/[0.02]">
                   <div className="flex items-center gap-3 mb-3">
-                     <div className="h-8 w-8 rounded-full bg-[#1b8be0]/20 flex items-center justify-center text-[#1b8be0]"><UserCircle className="h-5 w-5" /></div>
+                     <div className="h-8 w-8 rounded-full bg-[var(--primary)]/20 flex items-center justify-center text-[var(--primary)]"><UserCircle className="h-5 w-5" /></div>
                      <div>
                         <p className="text-sm font-bold">{o.author_name}</p>
                         <p className="text-[9px] opacity-40 uppercase tracking-tighter">{new Date(o.created_at).toLocaleDateString()}</p>

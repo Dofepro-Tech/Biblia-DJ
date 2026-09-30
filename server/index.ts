@@ -6,7 +6,7 @@ import dotenv from 'dotenv';
 import express from 'express';
 import type { RequestHandler, Response } from 'express';
 import { getBibleVersion, normalizeAppLanguage } from '../src/lib/language.ts';
-import type { ChatMessage, StudyStep } from '../src/types.ts';
+import type { ChapterData, ChatMessage, StudyStep } from '../src/types.ts';
 import {
   generateAiText,
   getAiErrorDetails,
@@ -18,6 +18,7 @@ import {
 } from './aiProvider.ts';
 import { searchBible } from './bibleSearch.ts';
 import { getRemoteDailyContent } from './dailyContentFeed.ts';
+import { FALLBACK_BIBLE_BOOKS } from '../src/lib/fallbackBooks.ts';
 
 type ExplainType = 'explica' | 'contexto' | 'aplicacion';
 type StudyMode = 'book' | 'theme';
@@ -362,6 +363,8 @@ const handleBibleSearch: RequestHandler = async (request, response) => {
   const query = typeof request.query.query === 'string' ? request.query.query : '';
   const requestedLimit = typeof request.query.limit === 'string' ? Number(request.query.limit) : NaN;
   const limit = Number.isFinite(requestedLimit) && requestedLimit > 0 ? Math.min(requestedLimit, 100) : 60;
+  const requestedOffset = typeof request.query.offset === 'string' ? Number(request.query.offset) : 0;
+  const offset = Number.isFinite(requestedOffset) && requestedOffset > 0 ? Math.floor(requestedOffset) : 0;
 
   if (query.trim().length < 2) {
     return response.json({
@@ -373,7 +376,7 @@ const handleBibleSearch: RequestHandler = async (request, response) => {
   }
 
   try {
-    const searchResponse = await searchBible(query, language, limit);
+    const searchResponse = await searchBible(query, language, limit, offset);
     return response.json(searchResponse);
   } catch (error) {
     console.error('Bible search route error:', error);
@@ -392,6 +395,11 @@ const handleBibleRead: RequestHandler = async (request, response) => {
 
   try {
     if (language === 'es') {
+      const spanishApiKey = process.env.BIBLE_API_KEY;
+      const spanishBibleId = process.env.BIBLE_API_ES_BIBLE_ID;
+      if (spanishApiKey && spanishBibleId) {
+        return response.json(await fetchApiBibleChapter(book, chapter, spanishApiKey, spanishBibleId));
+      }
       return response.json(await fetchRvr1909Chapter(book, chapter));
     }
 
@@ -423,12 +431,39 @@ const handleBibleRead: RequestHandler = async (request, response) => {
       num_chapters: 0,
       chapter,
       vers: verses,
+      version: 'KJV',
     });
   } catch (error) {
     console.error('Bible read route error:', error);
     return sendError(response, 502, language === 'en' ? 'Could not load this Bible chapter.' : 'No se pudo cargar este capítulo bíblico.');
   }
 };
+
+async function fetchApiBibleChapter(bookName: string, chapter: number, apiKey: string, bibleId: string): Promise<ChapterData> {
+  const chapterId = `${getApiBibleBookId(bookName)}.${chapter}`;
+  const bibleResponse = await fetch(
+    `${API_BIBLE_BASE_URL}/bibles/${encodeURIComponent(bibleId)}/chapters/${encodeURIComponent(chapterId)}?content-type=json&include-notes=false&include-titles=true`,
+    { headers: { 'api-key': apiKey } },
+  );
+  if (!bibleResponse.ok) {
+    throw new Error(`API.Bible chapter request returned ${bibleResponse.status}.`);
+  }
+
+  const apiResponse = await bibleResponse.json() as { data?: { reference?: string; content?: unknown } };
+  const verses = extractApiBibleVerses(apiResponse.data?.content);
+  if (verses.length === 0) {
+    throw new Error('API.Bible returned a chapter without verses.');
+  }
+
+  return {
+    testament: '',
+    name: apiResponse.data?.reference?.replace(/\s+\d+$/, '') || bookName,
+    num_chapters: FALLBACK_BIBLE_BOOKS.find((book) => book.names.includes(bookName))?.chapters ?? 0,
+    chapter,
+    vers: verses,
+    version: 'RVR1960',
+  };
+}
 
 async function fetchRvr1909Chapter(bookName: string, chapter: number) {
   const bookCode = getApiBibleBookId(bookName);
@@ -477,7 +512,7 @@ async function fetchRvr1909Chapter(bookName: string, chapter: number) {
     throw new Error(`RVR1909 chapter ${chapter} has no verses.`);
   }
 
-  return { testament: '', name: bookName, num_chapters: 0, chapter, vers };
+  return { testament: '', name: bookName, num_chapters: 0, chapter, vers, version: 'RVR1909' };
 }
 
 function decodeUsxText(value: string) {
@@ -503,7 +538,17 @@ function getApiBibleBookId(bookName: string) {
     ROMANOS: 'ROM', ROMANS: 'ROM', APOCALIPSIS: 'REV', REVELATION: 'REV',
   };
   const normalizedName = bookName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase();
-  return aliases[normalizedName] || normalizedName.replace(/[^A-Z0-9]/g, '');
+  const aliasedBookId = aliases[normalizedName];
+  if (aliasedBookId) {
+    return aliasedBookId;
+  }
+
+  const normalizedToken = normalizedName.replace(/[^A-Z0-9]/g, '');
+  const fallbackBookIndex = FALLBACK_BIBLE_BOOKS.findIndex((book) => book.names.some((name) => {
+    const normalizedAlias = name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    return normalizedAlias === normalizedToken;
+  }));
+  return fallbackBookIndex >= 0 ? RVR1909_BOOK_CODES[fallbackBookIndex] : normalizedToken;
 }
 
 function extractApiBibleVerses(content: unknown) {
@@ -594,32 +639,198 @@ app.get('/api/bible/read', handleBibleRead);
 app.get('/api/bible/search', handleBibleSearch);
 app.get('/api/daily-content', handleDailyContent);
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const supabaseAuthUrl = process.env.SUPABASE_URL?.replace(/\/+$/, '');
+const supabaseAnonKey = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
+const OAUTH_CALLBACK_PATH = '/auth/callback';
 
-const handleSaveOpinion: RequestHandler = async (request, response) => {
-  const { content, author } = request.body;
-  if (!content) return sendError(response, 400, 'Content is required');
+function isAllowedAuthRedirect(value: string) {
+  try {
+    const redirect = new URL(value);
+    if (redirect.protocol === 'com.dofepro.biblianj:') {
+      return redirect.hostname === 'auth' && redirect.pathname === OAUTH_CALLBACK_PATH;
+    }
+    return (redirect.protocol === 'https:' || redirect.protocol === 'http:')
+      && allowedOrigins.has(redirect.origin);
+  } catch {
+    return false;
+  }
+}
+
+app.get('/api/auth/google', (request, response) => {
+  const redirectTo = typeof request.query.redirectTo === 'string' ? request.query.redirectTo : '';
+  const codeChallenge = typeof request.query.codeChallenge === 'string' ? request.query.codeChallenge : '';
+  if (!supabaseAuthUrl || !supabaseAnonKey) {
+    return sendError(response, 503, 'El acceso con cuentas no está configurado en el servidor.');
+  }
+  if (!isAllowedAuthRedirect(redirectTo) || !/^[A-Za-z0-9_-]{43,128}$/.test(codeChallenge)) {
+    return sendError(response, 400, 'La dirección de retorno o el desafío OAuth no son válidos.');
+  }
+  const authorizeUrl = new URL(`${supabaseAuthUrl}/auth/v1/authorize`);
+  authorizeUrl.searchParams.set('provider', 'google');
+  authorizeUrl.searchParams.set('apikey', supabaseAnonKey);
+  authorizeUrl.searchParams.set('redirect_to', redirectTo);
+  authorizeUrl.searchParams.set('code_challenge', codeChallenge);
+  authorizeUrl.searchParams.set('code_challenge_method', 's256');
+  authorizeUrl.searchParams.set('scopes', 'openid email profile');
+  return response.json({ url: authorizeUrl.toString() });
+});
+
+app.post('/api/auth/exchange', (request, response) => {
+  const { code, codeVerifier } = request.body as { code?: unknown; codeVerifier?: unknown };
+  if (typeof code !== 'string' || !code || typeof codeVerifier !== 'string' || !/^[a-f0-9]{96}$/.test(codeVerifier)) {
+    return sendError(response, 400, 'El código o el verificador OAuth no son válidos.');
+  }
+  return proxySupabaseAuth(response, 'token?grant_type=pkce', { auth_code: code, code_verifier: codeVerifier });
+});
+
+async function proxySupabaseAuth(response: Response, endpoint: string, body: Record<string, unknown>, accessToken?: string) {
+  if (!supabaseAuthUrl || !supabaseAnonKey) {
+    return sendError(response, 503, 'El acceso con cuentas no está configurado en el servidor.');
+  }
 
   try {
-    // Fallback in-memory/log storage
-    console.log(`[OPINION] ${author || 'Anónimo'}: ${content}`);
-    return response.json({ id: Date.now(), content, author_name: author || 'Anónimo', created_at: new Date().toISOString() });
+    const upstream = await fetch(`${supabaseAuthUrl}/auth/v1/${endpoint}`, {
+      method: 'POST',
+      headers: {
+        apikey: supabaseAnonKey,
+        'Content-Type': 'application/json',
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+      },
+      body: JSON.stringify(body),
+    });
+    const result = await upstream.json().catch(() => ({})) as Record<string, unknown>;
+
+    if (!upstream.ok) {
+      const message = [result.msg, result.message, result.error_description, result.error]
+        .find((value): value is string => typeof value === 'string');
+      return sendError(response, upstream.status >= 400 && upstream.status < 500 ? upstream.status : 502, message || 'El servicio de autenticación rechazó la solicitud.');
+    }
+
+    if (endpoint === 'signup') {
+      const returnedSession = result.session && typeof result.session === 'object'
+        ? result.session as Record<string, unknown>
+        : (typeof result.access_token === 'string' ? result : null);
+      return response.status(upstream.status).json({ user: result.user, session: returnedSession });
+    }
+
+    if (upstream.status === 204) {
+      return response.status(204).end();
+    }
+
+    return response.status(upstream.status).json(result);
+  } catch (error) {
+    console.error('[AUTH] Supabase request failed:', error);
+    return sendError(response, 502, 'No se pudo conectar con el servicio de autenticación.');
+  }
+}
+
+app.post('/api/auth/signup', (request, response) => {
+  const { email, password, displayName } = request.body as { email?: unknown; password?: unknown; displayName?: unknown };
+  if (typeof email !== 'string' || typeof password !== 'string' || !email.trim() || password.length < 8) {
+    return sendError(response, 400, 'Introduce un correo válido y una contraseña de al menos 8 caracteres.');
+  }
+
+  return proxySupabaseAuth(response, 'signup', {
+    email: email.trim(),
+    password,
+    data: { display_name: typeof displayName === 'string' ? displayName.trim().slice(0, 80) : '' },
+  });
+});
+
+app.post('/api/auth/signin', (request, response) => {
+  const { email, password } = request.body as { email?: unknown; password?: unknown };
+  if (typeof email !== 'string' || typeof password !== 'string' || !email.trim() || !password) {
+    return sendError(response, 400, 'Introduce tu correo y contraseña.');
+  }
+
+  return proxySupabaseAuth(response, 'token?grant_type=password', { email: email.trim(), password });
+});
+
+app.post('/api/auth/refresh', (request, response) => {
+  const { refreshToken } = request.body as { refreshToken?: unknown };
+  if (typeof refreshToken !== 'string' || !refreshToken) {
+    return sendError(response, 400, 'La sesión ya no es válida. Inicia sesión de nuevo.');
+  }
+
+  return proxySupabaseAuth(response, 'token?grant_type=refresh_token', { refresh_token: refreshToken });
+});
+
+app.post('/api/auth/recover', (request, response) => {
+  const { email } = request.body as { email?: unknown };
+  if (typeof email !== 'string' || !email.trim()) {
+    return sendError(response, 400, 'Introduce el correo de tu cuenta.');
+  }
+  return proxySupabaseAuth(response, 'recover', { email: email.trim() });
+});
+
+app.post('/api/auth/signout', (request, response) => {
+  const { accessToken } = request.body as { accessToken?: unknown };
+  if (typeof accessToken !== 'string' || !accessToken) {
+    return sendError(response, 400, 'La sesión ya no es válida.');
+  }
+  return proxySupabaseAuth(response, 'logout', {}, accessToken);
+});
+const opinionsSupabaseUrl = process.env.OPINIONS_SUPABASE_URL;
+const opinionsSupabaseKey = process.env.OPINIONS_SUPABASE_SECRET_KEY || process.env.OPINIONS_SUPABASE_SERVICE_ROLE_KEY;
+
+function getOpinionsSupabaseHeaders(extraHeaders: Record<string, string> = {}) {
+  const headers: Record<string, string> = { apikey: opinionsSupabaseKey || '', ...extraHeaders };
+  // New sb_secret keys are API keys, not JWTs; legacy service_role keys are JWTs.
+  if (opinionsSupabaseKey && !opinionsSupabaseKey.startsWith('sb_secret_')) {
+    headers.Authorization = `Bearer ${opinionsSupabaseKey}`;
+  }
+  return headers;
+}
+
+const handleSaveOpinion: RequestHandler = async (request, response) => {
+  const content = typeof request.body?.content === 'string' ? request.body.content.trim() : '';
+  const author = typeof request.body?.author === 'string' ? request.body.author.trim().slice(0, 80) : '';
+  if (!content) return sendError(response, 400, 'Content is required');
+  if (content.length > 2000) return sendError(response, 400, 'Opinion must be 2000 characters or fewer.');
+  if (!opinionsSupabaseUrl || !opinionsSupabaseKey) return sendError(response, 503, 'Opinions are not configured on the server yet.');
+
+  try {
+    const result = await fetch(`${opinionsSupabaseUrl.replace(/\/$/, '')}/rest/v1/opinions?select=id,content,author_name,created_at`, {
+      method: 'POST',
+      headers: getOpinionsSupabaseHeaders({
+        'Content-Type': 'application/json',
+        Prefer: 'return=representation',
+      }),
+      body: JSON.stringify({ content, author_name: author || 'Anonymous' }),
+    });
+    const payload = await result.json().catch(() => null);
+    if (!result.ok) {
+      console.error('[OPINION] Supabase insert failed:', result.status, payload);
+      return sendError(response, result.status === 404 ? 503 : 502, result.status === 404
+        ? 'Opinions table is missing from Supabase.'
+        : 'Could not save the opinion. Please try again.');
+    }
+    return response.status(201).json(Array.isArray(payload) ? payload[0] : payload);
   } catch (error) {
     console.error('Save opinion error:', error);
-    return sendError(response, 500, 'Could not save opinion');
+    return sendError(response, 502, 'Could not save the opinion.');
   }
 };
 
 const handleGetOpinions: RequestHandler = async (_request, response) => {
+  if (!opinionsSupabaseUrl || !opinionsSupabaseKey) return sendError(response, 503, 'Opinions are not configured on the server yet.');
   try {
-    return response.json([]);
+    const result = await fetch(`${opinionsSupabaseUrl.replace(/\/$/, '')}/rest/v1/opinions?select=id,content,author_name,created_at&order=created_at.desc&limit=100`, {
+      headers: getOpinionsSupabaseHeaders(),
+    });
+    const payload = await result.json().catch(() => null);
+    if (!result.ok) {
+      console.error('[OPINION] Supabase select failed:', result.status, payload);
+      return sendError(response, result.status === 404 ? 503 : 502, result.status === 404
+        ? 'Opinions table is missing from Supabase.'
+        : 'Could not load opinions.');
+    }
+    return response.json(Array.isArray(payload) ? payload : []);
   } catch (error) {
     console.error('Get opinions error:', error);
-    return response.json([]);
+    return sendError(response, 502, 'Could not load opinions.');
   }
 };
-
 const handleStatsEvent: RequestHandler = async (request, response) => {
   return response.json({ status: 'ok' });
 };
@@ -657,7 +868,7 @@ if (existsSync(distIndexPath)) {
 const port = Number(process.env.PORT) || 3001;
 
 // Configuración de Supabase (Nueva v1.0.5)
-if (supabaseUrl && supabaseKey) {
+if (opinionsSupabaseUrl && opinionsSupabaseKey) {
   console.log('[SUPABASE] Conexión detectada y lista para v1.0.5');
 }
 

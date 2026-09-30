@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useState } from 'react';
 import { Book, ChapterData, Verse, Highlight, Bookmark, ReadingChallengeSummary, SidebarBookFilter } from '@/src/types';
 import { cn } from '@/src/lib/utils';
 import { PanelNavButtons } from '@/src/components/PanelNavButtons';
-import { MobileBottomNav, MobilePageFooter } from '@/src/components/MobileBottomNav';
+import { MobileBottomNav, MobilePageFooter, ScrollToTopButton } from '@/src/components/MobileBottomNav';
 import { fetchChapter } from '@/src/services/bibleApi';
 import { getSpeechLanguage } from '@/src/lib/language';
 import { BookOpen, Calendar, Gamepad2, Menu, ChevronDown, ChevronLeft, ChevronRight, Sun, Moon, Palette, Trash2, MoreVertical, Heart, Info, Share2, Settings, X, Search, ArrowRight, Bookmark as BookmarkIcon, Globe, Volume2, VolumeX, Copy, House, Flame, Star, User, HelpCircle } from 'lucide-react';
@@ -57,6 +57,8 @@ interface BibleReaderProps {
   onToggleRightSidebar?: () => void;
   onTrackSearchQuery?: (query: string) => void;
   readerSelectorRequestId?: number;
+  onReaderSelectorRequestHandled?: () => void;
+  bookPickerFilter?: SidebarBookFilter;
   verseFocusRequestId?: number;
   onShareContent?: (payload: any) => void | Promise<void>;
   onClearSelectedVerse?: () => void;
@@ -73,11 +75,37 @@ export function BibleReader(props: BibleReaderProps) {
   const currentLanguage = i18n.resolvedLanguage || i18n.language;
   const [showWelcomeBookPicker, setShowWelcomeBookPicker] = useState(false);
   const [welcomePickerStep, setWelcomePickerStep] = useState<'books' | 'chapters' | 'verses'>('books');
+  const [welcomePickerFilter, setWelcomePickerFilter] = useState<SidebarBookFilter>('all');
   const [welcomeTempBook, setWelcomeTempBook] = useState<Book | null>(null);
   const [welcomeTempChapter, setWelcomeTempChapter] = useState(1);
   const [welcomeVersesCount, setWelcomeVersesCount] = useState(0);
   const [isWelcomeVersesLoading, setIsWelcomeVersesLoading] = useState(false);
   const mainScrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!props.readerSelectorRequestId) return;
+    setWelcomePickerFilter(props.bookPickerFilter ?? 'all');
+    setWelcomePickerStep('books');
+    setShowWelcomeBookPicker(true);
+    props.onReaderSelectorRequestHandled?.();
+  }, [props.readerSelectorRequestId]);
+
+  useEffect(() => {
+    if (!props.verseFocusRequestId) return;
+    setShowWelcomeBookPicker(false);
+    setWelcomePickerStep('books');
+  }, [props.verseFocusRequestId]);
+
+  useEffect(() => {
+    if (!props.verseFocusRequestId || !selectedVerse?.verse) return;
+    const verseNode = mainScrollRef.current?.querySelector<HTMLElement>(`[data-verse-number="${selectedVerse.number}"]`);
+    if (!verseNode) return;
+
+    const frameId = window.requestAnimationFrame(() => {
+      verseNode.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+    return () => window.cancelAnimationFrame(frameId);
+  }, [props.verseFocusRequestId, chapterData, selectedVerse?.id, selectedVerse?.verse]);
 
   const readerCopy = currentLanguage.startsWith('en')
     ? { book: 'Book', chapter: 'Chapter', verse: 'Verse', old: 'Old Testament', new: 'New Testament' }
@@ -87,6 +115,15 @@ export function BibleReader(props: BibleReaderProps) {
     setWelcomeTempBook(book);
     setWelcomePickerStep('chapters');
   };
+
+  const openBookPicker = (filter: SidebarBookFilter) => {
+    setWelcomePickerFilter(filter);
+    setWelcomePickerStep('books');
+    setShowWelcomeBookPicker(true);
+  };
+
+  const oldTestamentBooks = books.filter((book) => book.testament.toLowerCase().includes('antiguo') || book.testament.toLowerCase().includes('old'));
+  const newTestamentBooks = books.filter((book) => !oldTestamentBooks.includes(book));
 
   const handleWelcomeChapterSelect = async (chapter: number) => {
     if (!welcomeTempBook) return;
@@ -111,7 +148,7 @@ export function BibleReader(props: BibleReaderProps) {
   };
 
   const WebNavItem = ({ label, onClick, active }: { label: string, onClick?: () => void, active?: boolean }) => (
-    <button onClick={onClick} className={cn("px-4 py-2 rounded-xl text-sm font-bold tracking-wide transition-all whitespace-nowrap", isDarkMode ? "text-white/60 hover:text-white hover:bg-white/5" : "text-slate-500 hover:text-slate-900 hover:bg-slate-100", active && "text-[#1b8be0]")}>{label}</button>
+    <button onClick={onClick} className={cn("px-4 py-2 rounded-xl text-sm font-bold tracking-wide transition-all whitespace-nowrap", isDarkMode ? "text-white/60 hover:text-white hover:bg-white/5" : "text-slate-500 hover:text-slate-900 hover:bg-slate-100", active && "text-[var(--primary)]")}>{label}</button>
   );
 
   const WebNavDropdown = ({ label, items, onClick }: { label: string, items: { label: string, onClick: () => void }[], onClick?: () => void }) => {
@@ -128,7 +165,7 @@ export function BibleReader(props: BibleReaderProps) {
                 <p className={cn("text-[10px] font-bold uppercase tracking-[0.2em] mb-4 pb-2 border-b", isDarkMode ? "text-white/30 border-white/5" : "text-slate-400 border-slate-100")}>{label}</p>
                 <div className="grid grid-cols-3 gap-4">
                   {items.map((item, idx) => (
-                    <button key={idx} onClick={() => { item.onClick(); setIsOpen(false); }} className={cn("text-left text-[13px] font-medium hover:text-[#1b8be0]", isDarkMode ? "text-white/70" : "text-slate-600")}>{item.label}</button>
+                    <button key={idx} onClick={() => { item.onClick(); setIsOpen(false); }} className={cn("text-left text-[13px] font-medium hover:text-[var(--primary)]", isDarkMode ? "text-white/70" : "text-slate-600")}>{item.label}</button>
                   ))}
                 </div>
               </div>
@@ -143,7 +180,7 @@ export function BibleReader(props: BibleReaderProps) {
     return (
       <div className="flex-1 h-screen flex flex-col items-center justify-center bg-[#111820] transition-colors duration-300">
         <motion.div animate={{ rotate: 360 }} transition={{ ease: "linear", duration: 2, repeat: Infinity }}>
-          <BookOpen className="w-12 h-12 text-[#1b8be0]/40" />
+          <BookOpen className="w-12 h-12 text-[var(--primary)]/40" />
         </motion.div>
         <p className="mt-4 text-xs font-bold uppercase tracking-[0.3em] text-white/30 animate-pulse">Cargando la Palabra...</p>
       </div>
@@ -151,29 +188,29 @@ export function BibleReader(props: BibleReaderProps) {
   }
 
   return (
-    <div ref={mainScrollRef} className={cn('relative flex-1 h-screen overflow-y-auto transition-colors duration-300', isDarkMode ? 'bg-[#04101f] text-white' : 'bg-[#f7fbff] text-[#102542]')}>
+    <div ref={mainScrollRef} data-reader-scroll-root="true" className={cn('relative flex-1 h-screen overflow-y-auto transition-colors duration-300', isDarkMode ? 'bg-[#04101f] text-white' : 'bg-[#f7fbff] text-[#102542]')}>
       {/* HEADER WEB */}
       <header className={cn('hidden lg:flex sticky top-0 z-50 border-b px-6 py-2 backdrop-blur-xl transition-colors duration-300', isDarkMode ? 'bg-[#030812]/95 border-white/10' : 'bg-white/95 border-slate-200')}>
         <div className="mx-auto w-full max-w-[1600px] flex items-center justify-between gap-4">
           <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
-              <button onClick={onMenuClick} className="p-2 rounded-xl text-white/50 hover:text-white hover:bg-white/5 transition-all" title="Menú"><Menu className="h-5 w-5" /></button>
+              <button onClick={onMenuClick} className={cn('rounded-xl border p-2 transition-all', isDarkMode ? 'border-white/10 bg-white/5 text-white/75 hover:bg-white/10 hover:text-white' : 'border-[#cbd8e8] bg-[#edf5ff] text-[#174a80] hover:border-[var(--primary)] hover:bg-[var(--primary)]/10 hover:text-[var(--primary)]')} title="Menú"><Menu className="h-5 w-5" /></button>
               <div className="flex items-center gap-3 cursor-pointer" onClick={onGoHome}>
                 <div className={cn("h-9 w-9 p-1 rounded-lg border transition-colors", isDarkMode ? "bg-[#07152b] border-[#1d4f96]" : "bg-[#f8fbff] border-blue-200")}>
                   <BrandSeal className="h-full w-full" />
                 </div>
                 <div className="flex flex-col">
                   <h1 className="font-serif text-xl font-bold whitespace-nowrap">{t('app.title')}</h1>
-                  <p className="text-[10px] font-bold text-[#7fb8ff] uppercase tracking-[0.2em] leading-none">RV1960</p>
+                  <p className="text-[10px] font-bold text-[var(--primary)] uppercase tracking-[0.12em] leading-tight">{chapterData?.version ?? 'RVR1960'}{chapterData ? ` · ${chapterData.name} ${chapterData.chapter}${selectedVerse ? `:${selectedVerse.number}` : ''}` : ''}</p>
                 </div>
               </div>
             </div>
             <nav className="flex items-center gap-1">
               <button onClick={onGoHome} className="p-2 rounded-xl hover:bg-white/5 transition-all"><House className="h-5 w-5" /></button>
-              <WebNavDropdown label="Biblia y Estudio" onClick={() => { setShowWelcomeBookPicker(true); setWelcomePickerStep('books'); }} items={[
-                { label: 'Toda la Biblia', onClick: () => { if (books[0]) onNavigateToVerse?.(books[0].abrev, 1, 1); } },
-                { label: 'Antiguo Testamento', onClick: () => onNavigateToVerse?.('Gn', 1, 1) },
-                { label: 'Nuevo Testamento', onClick: () => onNavigateToVerse?.('Mt', 1, 1) },
+              <WebNavDropdown label="Biblia y Estudio" onClick={() => openBookPicker('all')} items={[
+                { label: 'Toda la Biblia', onClick: () => openBookPicker('all') },
+                { label: 'Antiguo Testamento', onClick: () => openBookPicker('old') },
+                { label: 'Nuevo Testamento', onClick: () => openBookPicker('new') },
                 { label: 'Estudio con IA', onClick: onOpenStudy },
                 { label: 'Opiniones', onClick: onOpenOpinions },
                 { label: 'Diccionario', onClick: onOpenDictionary },
@@ -185,8 +222,8 @@ export function BibleReader(props: BibleReaderProps) {
           </div>
           <div className="flex items-center gap-4">
              <button onClick={() => i18n.changeLanguage(currentLanguage === 'es' ? 'en' : 'es')} className="px-3 py-1.5 rounded-full border border-white/10 text-xs font-bold bg-white/5 transition-all"><Globe className="h-3.5 w-3.5 mr-2 inline" />{currentLanguage === 'es' ? 'Español' : 'English'}</button>
-             <button onClick={onOpenUser} className="px-4 py-2 rounded-full bg-[#1b8be0] text-white text-xs font-bold hover:bg-[#2597eb] transition-all">Iniciar Sesión</button>
-             <button onClick={onToggleDarkMode} className="p-2 rounded-xl hover:bg-white/5 transition-all">{isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}</button>
+             <button onClick={onOpenUser} className="px-4 py-2 rounded-full bg-[var(--primary)] text-white text-xs font-bold hover:bg-[var(--primary-hover)] transition-all">Iniciar Sesión</button>
+             <button onClick={onToggleDarkMode} className="theme-toggle-action p-2 rounded-xl hover:bg-white/5 transition-all" aria-label={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}>{isDarkMode ? <Sun className="h-5 w-5 text-amber-300" /> : <Moon className="h-5 w-5 text-rose-400" />}</button>
           </div>
         </div>
       </header>
@@ -194,10 +231,10 @@ export function BibleReader(props: BibleReaderProps) {
       {/* HEADER MOVIL SLIM */}
       <header className="lg:hidden sticky top-0 z-30 border-b border-white/10 bg-[#030812]/96 px-4 py-3 backdrop-blur-xl flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <button onClick={onMenuClick} className="p-2 rounded-2xl border border-white/10 bg-white/5 text-white"><Menu className="h-5 w-5" /></button>
+          <button onClick={onMenuClick} className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--primary)]/35 bg-[var(--primary)]/15 text-[var(--primary)] transition-colors hover:bg-[var(--primary)]/25"><Menu className="h-5 w-5" /></button>
           <div className="min-w-0">
              <p className="truncate font-serif text-xl font-bold leading-none text-white">{t('app.title')}</p>
-             <p className="mt-1 text-[10px] font-semibold text-[#7fb8ff]">RV1960</p>
+              <p className="mt-1 truncate text-[10px] font-semibold text-[var(--primary)]">{chapterData?.version ?? 'RVR1960'}{chapterData ? ` · ${chapterData.name} ${chapterData.chapter}${selectedVerse ? `:${selectedVerse.number}` : ''}` : ''}</p>
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -207,16 +244,62 @@ export function BibleReader(props: BibleReaderProps) {
       </header>
 
       <div className="mx-auto w-full max-w-[1200px] flex-1 px-4 py-8">
-        {!chapterData ? (
+        {chapterData && selectedBook && !showWelcomeBookPicker && (
+          <nav aria-label={currentLanguage.startsWith('en') ? 'Bible navigation' : 'Navegación bíblica'} className={cn('reader-theme-nav sticky top-[64px] z-20 mb-6 grid grid-cols-3 gap-1 rounded-2xl border p-2 backdrop-blur-xl sm:gap-2 lg:top-[56px]', isDarkMode ? 'border-white/10 bg-[#071321]/95 text-white' : 'border-[#d8e4f2] bg-[#f7fbff]/95 text-[#102542]')}>
+            <ReaderStepper
+              label={readerCopy.book}
+              value={selectedBook.names[0]}
+              previousDisabled={books.findIndex((book) => book.abrev === selectedBook.abrev) <= 0}
+              nextDisabled={books.findIndex((book) => book.abrev === selectedBook.abrev) >= books.length - 1}
+              isDarkMode={isDarkMode}
+              previousLabel={currentLanguage.startsWith('en') ? 'Previous book' : 'Libro anterior'}
+              nextLabel={currentLanguage.startsWith('en') ? 'Next book' : 'Libro siguiente'}
+              onPrevious={() => {
+                const index = books.findIndex((book) => book.abrev === selectedBook.abrev);
+                if (index > 0) onSelectBook(books[index - 1]);
+              }}
+              onNext={() => {
+                const index = books.findIndex((book) => book.abrev === selectedBook.abrev);
+                if (index >= 0 && index < books.length - 1) onSelectBook(books[index + 1]);
+              }}
+            />
+            <ReaderStepper
+              label={readerCopy.chapter}
+              value={String(selectedChapter)}
+              previousDisabled={selectedChapter <= 1}
+              nextDisabled={selectedChapter >= selectedBook.chapters}
+              isDarkMode={isDarkMode}
+              previousLabel={currentLanguage.startsWith('en') ? 'Previous chapter' : 'Capítulo anterior'}
+              nextLabel={currentLanguage.startsWith('en') ? 'Next chapter' : 'Capítulo siguiente'}
+              onPrevious={() => selectedChapter > 1 && onSelectChapter(selectedChapter - 1)}
+              onNext={() => selectedChapter < selectedBook.chapters && onSelectChapter(selectedChapter + 1)}
+            />
+            <ReaderStepper
+              label={readerCopy.verse}
+              value={selectedVerse ? String(selectedVerse.number) : '—'}
+              previousDisabled={!selectedVerse || selectedVerse.number <= 1}
+              nextDisabled={!!selectedVerse && selectedVerse.number >= chapterData.vers.length}
+              isDarkMode={isDarkMode}
+              previousLabel={currentLanguage.startsWith('en') ? 'Previous verse' : 'Versículo anterior'}
+              nextLabel={currentLanguage.startsWith('en') ? 'Next verse' : 'Versículo siguiente'}
+              onPrevious={() => selectedVerse && selectedVerse.number > 1 && onNavigateToVerse?.(selectedBook.abrev, selectedChapter, selectedVerse.number - 1)}
+              onNext={() => {
+                const nextVerse = (selectedVerse?.number ?? 0) + 1;
+                if (nextVerse <= chapterData.vers.length) onNavigateToVerse?.(selectedBook.abrev, selectedChapter, nextVerse);
+              }}
+            />
+          </nav>
+        )}
+        {!chapterData || showWelcomeBookPicker ? (
           <div className="min-h-[70vh] flex flex-col items-center justify-center text-center">
             <div className={cn("w-full max-w-3xl rounded-[40px] border p-8 sm:p-12 shadow-2xl transition-all", isDarkMode ? "bg-[#0b1a30] border-white/10" : "bg-white border-slate-200")}>
               {!showWelcomeBookPicker ? (
                 <>
-                  <BookOpen className="mx-auto mb-8 h-20 w-20 text-[#1b8be0]/20" />
+                  <BookOpen className="mx-auto mb-8 h-20 w-20 text-[var(--primary)]/20" />
                   <h2 className="font-serif text-4xl font-bold mb-4">{t('app.welcome')}</h2>
                   <p className="text-lg opacity-60 max-w-lg mx-auto mb-10">{t('app.description')}</p>
                   <div className="flex flex-wrap justify-center gap-4">
-                    <button onClick={() => setShowWelcomeBookPicker(true)} className="rounded-full bg-[#1b8be0] px-8 py-4 text-xs font-bold uppercase tracking-widest text-white hover:bg-[#2597eb] transition-all shadow-lg shadow-blue-500/20 flex items-center gap-3"><Menu className="h-5 w-5" />{t('menu.books')}</button>
+                    <button onClick={() => setShowWelcomeBookPicker(true)} className="rounded-full bg-[var(--primary)] px-8 py-4 text-xs font-bold uppercase tracking-widest text-white hover:bg-[var(--primary-hover)] transition-all shadow-lg shadow-blue-500/20 flex items-center gap-3"><Menu className="h-5 w-5" />{t('menu.books')}</button>
                     <button onClick={onGoHome} className="rounded-full border border-current opacity-60 px-8 py-4 text-xs font-bold uppercase tracking-widest hover:opacity-100 transition-all flex items-center gap-3"><House className="h-5 w-5" />{t('app.home')}</button>
                   </div>
                   <div className="mt-12 grid grid-cols-3 gap-6">
@@ -236,30 +319,30 @@ export function BibleReader(props: BibleReaderProps) {
                    </div>
 
                    {welcomePickerStep === 'books' && (
-                     <div className="grid gap-12 md:grid-cols-2">
-                        <div>
-                           <h4 className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-6 flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-blue-500"/> {readerCopy.old}</h4>
-                           <div className="grid grid-cols-2 gap-2">
-                              {books.filter(b => b.testament.toLowerCase().includes('antiguo') || b.testament.toLowerCase().includes('old')).map(book => (
-                                <button key={book.abrev} onClick={() => handleWelcomeBookSelect(book)} className="text-left py-2.5 px-4 rounded-xl text-sm font-medium bg-white/5 hover:bg-[#1b8be0] hover:text-white transition-all">{book.names[0]}</button>
-                              ))}
-                           </div>
-                        </div>
-                        <div>
-                           <h4 className="text-xs font-bold uppercase tracking-widest text-gold mb-6 flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-gold"/> {readerCopy.new}</h4>
-                           <div className="grid grid-cols-2 gap-2">
-                              {books.filter(b => !b.testament.toLowerCase().includes('antiguo') && !b.testament.toLowerCase().includes('old')).map(book => (
-                                <button key={book.abrev} onClick={() => handleWelcomeBookSelect(book)} className="text-left py-2.5 px-4 rounded-xl text-sm font-medium bg-white/5 hover:bg-[#1b8be0] hover:text-white transition-all">{book.names[0]}</button>
-                              ))}
-                           </div>
-                        </div>
+                     <div className={cn('grid gap-8', welcomePickerFilter === 'all' ? 'md:grid-cols-2' : 'grid-cols-1')}>
+                       {welcomePickerFilter !== 'new' && <div>
+                         <h4 className="text-xs font-bold uppercase tracking-widest text-blue-400 mb-6 flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-blue-500"/> {readerCopy.old}</h4>
+                         <div className="grid grid-cols-2 gap-2">
+                           {oldTestamentBooks.map(book => (
+                             <button key={book.abrev} onClick={() => handleWelcomeBookSelect(book)} className="text-left py-2.5 px-4 rounded-xl text-sm font-medium bg-white/5 hover:bg-[var(--primary)] hover:text-white transition-all">{book.names[0]}</button>
+                           ))}
+                         </div>
+                       </div>}
+                       {welcomePickerFilter !== 'old' && <div>
+                         <h4 className="text-xs font-bold uppercase tracking-widest text-gold mb-6 flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-gold"/> {readerCopy.new}</h4>
+                         <div className="grid grid-cols-2 gap-2">
+                           {newTestamentBooks.map(book => (
+                             <button key={book.abrev} onClick={() => handleWelcomeBookSelect(book)} className="text-left py-2.5 px-4 rounded-xl text-sm font-medium bg-white/5 hover:bg-[var(--primary)] hover:text-white transition-all">{book.names[0]}</button>
+                           ))}
+                         </div>
+                       </div>}
                      </div>
                    )}
 
                    {welcomePickerStep === 'chapters' && (
                      <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-12 gap-3">
                         {Array.from({ length: welcomeTempBook?.chapters || 0 }, (_, i) => i + 1).map(ch => (
-                          <button key={ch} onClick={() => handleWelcomeChapterSelect(ch)} className="aspect-square flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-lg font-bold hover:bg-[#1b8be0] hover:text-white transition-all">{ch}</button>
+                          <button key={ch} onClick={() => handleWelcomeChapterSelect(ch)} className="aspect-square flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-lg font-bold hover:bg-[var(--primary)] hover:text-white transition-all">{ch}</button>
                         ))}
                      </div>
                    )}
@@ -267,7 +350,7 @@ export function BibleReader(props: BibleReaderProps) {
                    {welcomePickerStep === 'verses' && (
                      <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-12 gap-3">
                         {Array.from({ length: welcomeVersesCount }, (_, i) => i + 1).map(v => (
-                          <button key={v} onClick={() => handleWelcomeVerseSelect(v)} className="aspect-square flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-lg font-bold hover:bg-[#1b8be0] hover:text-white transition-all">{v}</button>
+                          <button key={v} onClick={() => handleWelcomeVerseSelect(v)} className="aspect-square flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-lg font-bold hover:bg-[var(--primary)] hover:text-white transition-all">{v}</button>
                         ))}
                      </div>
                    )}
@@ -279,15 +362,17 @@ export function BibleReader(props: BibleReaderProps) {
           <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
              {chapterData.vers.map((v) => (
                <div key={v.id} className="relative group">
-                  {v.study && <h3 className="mt-12 mb-6 border-l-4 border-[#1b8be0] pl-6 font-serif text-lg font-bold uppercase tracking-widest text-[#1b8be0]">{v.study}</h3>}
-                  <p
-                    onClick={() => onSelectVerse(v)}
-                    className={cn(
+                  {v.study && <h3 className="mt-12 mb-6 border-l-4 border-[var(--primary)] pl-6 font-serif text-lg font-bold uppercase tracking-widest text-[var(--primary)]">{v.study}</h3>}
+                   <p
+                     data-verse-number={v.number}
+                     onClick={() => onSelectVerse(v)}
+                     style={{ fontSize: `${fontSize}px` }}
+                     className={cn(
                       "font-serif text-xl leading-relaxed cursor-pointer p-4 rounded-3xl transition-all duration-300",
-                      selectedVerse?.id === v.id ? "bg-[#1b8be0]/15 ring-2 ring-[#1b8be0]/20" : "hover:bg-white/5"
+                      selectedVerse?.id === v.id ? "bg-[var(--primary)]/15 ring-2 ring-[var(--primary)]/25" : "hover:bg-[var(--primary)]/5"
                     )}
                   >
-                    <span className="text-[#1b8be0] font-bold mr-3 text-sm align-top">{v.number}</span>
+                    <span className="text-[var(--primary)] font-bold mr-3 text-sm align-top">{v.number}</span>
                     {v.verse}
                   </p>
                </div>
@@ -309,6 +394,7 @@ export function BibleReader(props: BibleReaderProps) {
         { id: 'game', label: 'Juegos', icon: <Gamepad2 />, onClick: onOpenGame! },
         { id: 'plans', label: 'Planes', icon: <Calendar />, onClick: onOpenPlans! },
       ]} />
+      <ScrollToTopButton targetSelector='[data-reader-scroll-root="true"]' label={currentLanguage.startsWith('en') ? 'Back to top' : 'Volver arriba'} />
     </div>
   );
 }
@@ -316,9 +402,42 @@ export function BibleReader(props: BibleReaderProps) {
 function CompactReaderStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
   return (
     <div className="rounded-3xl border border-white/5 bg-white/5 p-6 transition-all hover:bg-white/10">
-      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[#1b8be0]/20 text-[#1b8be0] mx-auto mb-4">{icon}</div>
+      <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--primary)]/20 text-[var(--primary)] mx-auto mb-4">{icon}</div>
       <p className="text-[10px] font-bold uppercase tracking-widest opacity-40 mb-1">{label}</p>
       <p className="text-3xl font-serif font-bold text-white">{value}</p>
+    </div>
+  );
+}
+
+interface ReaderStepperProps {
+  label: string;
+  value: string;
+  previousDisabled: boolean;
+  nextDisabled: boolean;
+  previousLabel: string;
+  nextLabel: string;
+  isDarkMode: boolean;
+  onPrevious: () => void;
+  onNext: () => void;
+}
+
+function ReaderStepper({ label, value, previousDisabled, nextDisabled, previousLabel, nextLabel, isDarkMode, onPrevious, onNext }: ReaderStepperProps) {
+  const arrowTone = isDarkMode
+    ? 'border-white/10 bg-white/5 text-white/80 hover:border-[var(--primary)]/50 hover:bg-[var(--primary)]/15 hover:text-[var(--primary)] disabled:text-white/20'
+    : 'border-[#d8e4f2] bg-white text-[#23466c] hover:border-[var(--primary)]/50 hover:bg-[var(--primary)]/10 hover:text-[var(--primary)] disabled:text-slate-300';
+
+  return (
+    <div className="mx-auto grid w-fit min-w-0 max-w-full grid-cols-[28px_minmax(48px,64px)_28px] items-center justify-items-center gap-1 rounded-xl px-0.5 py-1 sm:grid-cols-[32px_minmax(68px,92px)_32px] sm:gap-2">
+      <button type="button" onClick={onPrevious} disabled={previousDisabled} aria-label={previousLabel} title={previousLabel} className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:h-8 sm:w-8', arrowTone)}>
+        <ChevronLeft className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+      </button>
+      <div className="min-w-0 w-full text-center leading-tight">
+        <span className={cn('block truncate text-[9px] font-bold uppercase tracking-[0.12em]', isDarkMode ? 'text-white/45' : 'text-[#587392]')}>{label}</span>
+        <span className="block truncate text-xs font-semibold sm:text-sm">{value}</span>
+      </div>
+      <button type="button" onClick={onNext} disabled={nextDisabled} aria-label={nextLabel} title={nextLabel} className={cn('flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:h-8 sm:w-8', arrowTone)}>
+        <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+      </button>
     </div>
   );
 }

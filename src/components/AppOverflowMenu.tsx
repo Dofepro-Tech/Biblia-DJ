@@ -6,6 +6,7 @@ import { ArrowRight, BookOpen, Flame, Gamepad2, Globe, Heart, Info, Moon, MoreVe
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/src/lib/utils';
 import { canUseSpeechSynthesis, getSpeechVoices, setSpeechVoicesChangedListener } from '@/src/lib/speech';
+import { darkThemePalettes, lightThemePalettes } from '@/src/lib/themePalettes';
 
 type AboutSectionId = 'mission' | 'vision' | 'values';
 type PanelView = 'settings' | 'about';
@@ -33,6 +34,7 @@ interface AppOverflowMenuProps {
   onShare?: () => void;
   buttonClassName?: string;
   menuClassName?: string;
+  inline?: boolean;
 }
 
 export function AppOverflowMenu({
@@ -58,9 +60,10 @@ export function AppOverflowMenu({
   onShare,
   buttonClassName,
   menuClassName,
+  inline = false,
 }: AppOverflowMenuProps) {
   const { t, i18n } = useTranslation();
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(inline);
   const [view, setView] = useState<PanelView>('settings');
   const [activeAboutSection, setActiveAboutSection] = useState<AboutSectionId | null>(null);
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
@@ -76,7 +79,7 @@ export function AppOverflowMenu({
   }, []);
 
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen || inline) return;
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setIsOpen(false);
@@ -84,22 +87,23 @@ export function AppOverflowMenu({
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
+  }, [isOpen, inline]);
 
   const panelSurface = isDarkMode ? 'bg-[#0b1219] text-white border-white/10 shadow-2xl' : 'bg-white text-[#102542] border-slate-200 shadow-xl';
   const panelSubtle = isDarkMode ? 'text-white/45' : 'text-slate-400';
   const fieldSurface = isDarkMode ? 'bg-white/[0.03] border-white/5' : 'bg-slate-50 border-slate-200';
   const buttonTone = isDarkMode ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white border-slate-200 hover:bg-slate-50';
-  const activeTone = 'bg-[#1b8be0] border-[#1b8be0] text-white';
+  const activeTone = 'bg-[var(--primary)] border-[var(--primary)] text-white';
+  const themePalettes = isDarkMode ? darkThemePalettes : lightThemePalettes;
 
   return (
     <div className="relative">
-      <button
+      {!inline && <button
         onClick={() => setIsOpen(!isOpen)}
         className={cn('flex items-center justify-center rounded-2xl border transition-all', isDarkMode ? 'border-white/10 bg-white/5 text-white hover:bg-white/10' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50', buttonClassName || 'h-10 w-10')}
       >
         <MoreVertical className="h-5 w-5" />
-      </button>
+      </button>}
 
       <AnimatePresence>
         {isOpen && (
@@ -111,10 +115,10 @@ export function AppOverflowMenu({
             className={cn('absolute right-0 top-12 z-[200] w-[min(90vw,24rem)] overflow-hidden rounded-[32px] border', panelSurface, menuClassName)}
           >
             <div className="flex border-b border-white/5 bg-black/10">
-              <button onClick={() => setView('settings')} className={cn('flex-1 py-4 text-[10px] font-bold uppercase tracking-widest transition-all', view === 'settings' ? 'text-[#1b8be0] border-b-2 border-[#1b8be0]' : 'opacity-40')}>
+              <button onClick={() => setView('settings')} className={cn('flex-1 py-4 text-[10px] font-bold uppercase tracking-widest transition-all', view === 'settings' ? 'text-[var(--primary)] border-b-2 border-[var(--primary)]' : 'opacity-40')}>
                 {t('menu.settings')}
               </button>
-              <button onClick={() => setView('about')} className={cn('flex-1 py-4 text-[10px] font-bold uppercase tracking-widest transition-all', view === 'about' ? 'text-[#1b8be0] border-b-2 border-[#1b8be0]' : 'opacity-40')}>
+              <button onClick={() => setView('about')} className={cn('flex-1 py-4 text-[10px] font-bold uppercase tracking-widest transition-all', view === 'about' ? 'text-[var(--primary)] border-b-2 border-[var(--primary)]' : 'opacity-40')}>
                 {t('menu.about')}
               </button>
             </div>
@@ -122,11 +126,21 @@ export function AppOverflowMenu({
             <div className="max-h-[70vh] overflow-y-auto p-6 no-scrollbar">
               {view === 'settings' ? (
                 <div className="space-y-6">
+                  <div className="space-y-3 border-b border-white/5 pb-6">
+                    <label className={cn('block font-sans text-xs font-bold uppercase tracking-[0.22em]', panelSubtle)}>{currentLanguage.startsWith('es') ? 'Modo de color' : 'Color mode'}</label>
+                    <button type="button" onClick={onToggleDarkMode} className={cn('theme-toggle-action flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-sm font-semibold transition-all', buttonTone)}>
+                      <span className="flex items-center gap-3">
+                        {isDarkMode ? <Sun className="h-5 w-5 text-amber-400" /> : <Moon className="h-5 w-5 text-rose-400" />}
+                        {currentLanguage.startsWith('es') ? 'Cambiar apariencia' : 'Change appearance'}
+                      </span>
+                      <span className="rounded-full bg-[var(--primary)]/15 px-3 py-1 text-xs font-bold text-[var(--primary)]">{currentLanguage.startsWith('es') ? (isDarkMode ? 'Oscuro' : 'Claro') : (isDarkMode ? 'Dark' : 'Light')}</span>
+                    </button>
+                  </div>
                   <div className="space-y-4">
                     <label className={cn('block font-sans text-xs font-bold uppercase tracking-[0.22em]', panelSubtle)}>{t('settings.font_size')}</label>
                     <div className="flex items-center gap-4 px-2">
                       <span className="text-xs">A</span>
-                      <input type="range" min="14" max="32" value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))} className="flex-1 accent-[#1b8be0]" />
+                      <input type="range" min="14" max="32" value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))} className="flex-1 accent-[var(--primary)]" />
                       <span className="text-lg">A</span>
                     </div>
                   </div>
@@ -142,6 +156,22 @@ export function AppOverflowMenu({
                   <div className="space-y-4 border-t border-white/5 pt-6">
                     <label className={cn('block font-sans text-xs font-bold uppercase tracking-[0.22em]', panelSubtle)}>{currentLanguage.startsWith('es') ? 'Pantalla' : 'Display'}</label>
                     <SectionToggle label={currentLanguage.startsWith('es') ? 'Mantener encendida' : 'Keep screen on'} active={keepScreenOn} onChange={setKeepScreenOn} isDarkMode={isDarkMode} />
+                  </div>
+
+                  <div className="space-y-4 border-t border-white/5 pt-6">
+                    <div>
+                      <label className={cn('block font-sans text-xs font-bold uppercase tracking-[0.22em]', panelSubtle)}>{currentLanguage.startsWith('es') ? 'Paleta de temas' : 'Theme palette'}</label>
+                      <p className={cn('mt-1 text-xs', panelSubtle)}>{currentLanguage.startsWith('es') ? `${isDarkMode ? 'Temas oscuros' : 'Temas claros'} (10)` : `${isDarkMode ? 'Dark themes' : 'Light themes'} (10)`}</p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      {themePalettes.map((palette) => {
+                        const selected = accentColor === palette.id;
+                        return <button key={palette.id} type="button" onClick={() => setAccentColor(palette.id)} aria-pressed={selected} className={cn('theme-palette-choice flex min-h-11 items-center gap-2 rounded-xl border px-2.5 py-2 text-left text-xs font-semibold transition-colors', selected ? 'border-[var(--primary)] bg-[var(--primary)]/10' : buttonTone)}>
+                          <span className="h-3.5 w-3.5 shrink-0 rounded-full" style={{ backgroundColor: palette.color }} />
+                          <span className="leading-tight">{palette.name}</span>
+                        </button>;
+                      })}
+                    </div>
                   </div>
 
                   <div className="space-y-4 border-t border-white/5 pt-6">
@@ -187,11 +217,11 @@ export function AppOverflowMenu({
               )}
             </div>
 
-            <div className="p-4 border-t border-white/5 bg-black/5">
-               <button onClick={() => setIsOpen(false)} className="w-full py-3 rounded-2xl bg-[#1b8be0] text-white text-xs font-bold uppercase tracking-widest hover:bg-[#2597eb] transition-all">
+            {!inline && <div className="p-4 border-t border-white/5 bg-black/5">
+               <button onClick={() => setIsOpen(false)} className="w-full py-3 rounded-2xl bg-[var(--primary)] text-white text-xs font-bold uppercase tracking-widest hover:bg-[var(--primary-hover)] transition-all">
                  {t('app.ready')}
                </button>
-            </div>
+            </div>}
           </motion.div>
         )}
       </AnimatePresence>
@@ -203,7 +233,7 @@ function SectionToggle({ label, active, onChange, isDarkMode }: { label: string,
   return (
     <button type="button" onClick={() => onChange(!active)} className={cn("flex w-full items-center justify-between rounded-2xl border px-4 py-3 transition-all", isDarkMode ? "border-white/5 bg-white/5 hover:bg-white/10" : "border-slate-100 bg-slate-50 hover:bg-slate-100")}>
       <span className="text-sm font-bold">{label}</span>
-      <div className={cn("relative h-6 w-11 rounded-full transition-colors", active ? "bg-[#1b8be0]" : "bg-gray-400/30")}>
+      <div className={cn("relative h-6 w-11 rounded-full transition-colors", active ? "bg-[var(--primary)]" : "bg-gray-400/30")}>
         <motion.div animate={{ x: active ? 22 : 4 }} className="absolute top-1 h-4 w-4 rounded-full bg-white shadow-sm" transition={{ type: "spring", stiffness: 500, damping: 30 }} />
       </div>
     </button>
@@ -220,5 +250,5 @@ function InfoRow({ label, value, subdued }: { label: string; value: string; subd
 }
 
 function BrandSeal({ className, showWordmark = false }: { className?: string, showWordmark?: boolean }) {
-  return <div className={cn("flex items-center justify-center", className)}><BookOpen className="h-full w-full text-[#1b8be0]" /></div>;
+  return <div className={cn("flex items-center justify-center", className)}><BookOpen className="h-full w-full text-[var(--primary)]" /></div>;
 }

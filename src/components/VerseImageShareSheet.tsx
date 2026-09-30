@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowLeft, Bookmark, Copy, Download, ExternalLink, House, MessageCircle, Send, Share2, X } from 'lucide-react';
+import { ArrowLeft, Bookmark, BookOpen, Copy, Download, ExternalLink, House, MessageCircle, Send, Share2, X } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/src/lib/utils';
 
@@ -18,6 +18,7 @@ interface VerseImageShareSheetProps {
   onDownloadImage: () => void | Promise<void>;
   isSaved?: boolean;
   onToggleSaved?: () => void | Promise<void>;
+  onViewInBible?: () => void;
   headerBadge?: string;
   headerTitle?: string;
   headerSubtitle?: string;
@@ -37,11 +38,13 @@ export function VerseImageShareSheet({
   onDownloadImage,
   isSaved = false,
   onToggleSaved,
+  onViewInBible,
   headerBadge,
   headerTitle,
   headerSubtitle,
 }: VerseImageShareSheetProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isEnglish = (i18n.resolvedLanguage || i18n.language).startsWith('en');
   const [didCopy, setDidCopy] = useState(false);
   const [toastNotice, setToastNotice] = useState<string | null>(null);
 
@@ -52,6 +55,9 @@ export function VerseImageShareSheet({
     }, 2800);
   };
   const isShareMode = mode === 'share';
+  const favoriteLabel = isEnglish
+    ? (isSaved ? 'Remove from favorites' : 'Add to favorites')
+    : (isSaved ? 'Quitar de favoritos' : 'Agregar a favoritos');
   const resolvedHeaderBadge = headerBadge ?? t('app.share_verse_image');
   const resolvedHeaderTitle = headerTitle ?? t('share_sheet.image_title');
   const resolvedHeaderSubtitle = headerSubtitle ?? t('share_sheet.image_subtitle');
@@ -402,11 +408,24 @@ export function VerseImageShareSheet({
                               ? 'border-[#ffe39a] bg-[#d9a72a]'
                               : 'border-white/28 bg-[#1f7cab] hover:bg-[#298cc0]'
                           )}
-                          aria-label={t('app.save_verse')}
-                          title={t('app.save_verse')}
+                          aria-label={favoriteLabel}
+                          title={favoriteLabel}
                         >
                           <Bookmark className={cn('h-5 w-5', isSaved && 'fill-current')} />
                         </button>
+
+                        {!isShareMode && onViewInBible && (
+                          <button
+                            type="button"
+                            onClick={onViewInBible}
+                            className="flex h-14 items-center justify-center gap-2 rounded-[20px] border border-white/28 bg-[#1f7cab] px-3 text-white shadow-[0_10px_22px_rgba(3,19,42,0.24)] transition-all hover:-translate-y-0.5 hover:bg-[#298cc0]"
+                            aria-label={isEnglish ? 'View in Bible' : 'Ver en Biblia'}
+                            title={isEnglish ? 'View in Bible' : 'Ver en Biblia'}
+                          >
+                            <BookOpen className="h-5 w-5 shrink-0" />
+                            <span className="whitespace-nowrap text-[10px] font-bold">{isEnglish ? 'View in Bible' : 'Ver en Biblia'}</span>
+                          </button>
+                        )}
 
                         <button
                           type="button"

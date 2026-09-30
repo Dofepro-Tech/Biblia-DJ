@@ -1,7 +1,7 @@
 import { startTransition, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { AboutLegalType } from '@/src/components/AboutLegalModal';
-import { Book, ReadingChallengeSummary, SidebarBookFilter } from '@/src/types';
+import { Book, Bookmark as BibleBookmark, ReadingChallengeSummary, SidebarBookFilter } from '@/src/types';
 import { type DailyContentKind, type DailyResourceCard } from '@/src/lib/dailyContent';
 import { useDailyContent } from '@/src/hooks/useDailyContent';
 import { normalizeAppLanguage } from '@/src/lib/language';
@@ -10,14 +10,14 @@ import { canUseSpeechSynthesis, cancelSpeech, speakText } from '@/src/lib/speech
 import { cn } from '@/src/lib/utils';
 import { AppOverflowMenu } from '@/src/components/AppOverflowMenu';
 import { BrandSeal } from '@/src/components/BrandSeal';
-import { MobileBottomNav, MobilePageFooter } from '@/src/components/MobileBottomNav';
+import { MobileBottomNav, MobilePageFooter, ScrollToTopButton } from '@/src/components/MobileBottomNav';
 import { HelpGuideModal } from '@/src/components/HelpGuideModal';
 import { VerseImageShareSheet } from '@/src/components/VerseImageShareSheet';
 import { canNativeShareVerseImage, createVerseImageAsset, downloadVerseImage, nativeShareVerseImage, revokeVerseImageAsset } from '@/src/lib/shareVerseImage';
 import { fetchChapter } from '@/src/services/bibleApi';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
-import { BookHeart, BookOpen, Bookmark, Calendar, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Flame, Gamepad2, Heart, House, Image, LibraryBig, Menu, Moon, Newspaper, PlayCircle, Quote, Search, Share2, Sparkles, Star, Sun, SunMoon, User, Volume2, X, HelpCircle, Globe } from 'lucide-react';
+import { BookHeart, BookOpen, Bookmark, Calendar, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Flame, Gamepad2, Heart, House, Image, LibraryBig, Menu, Moon, Newspaper, PlayCircle, Quote, Search, Share2, Sparkles, Star, Sun, SunMoon, User, Volume2, X, HelpCircle } from 'lucide-react';
 
 const SAVED_DAILY_IMAGE_STORAGE_KEY = 'biblia_nj_saved_daily_images_v1';
 
@@ -41,6 +41,7 @@ interface HomeScreenProps {
   selectedBook: Book | null;
   selectedChapter: number;
   bookmarksCount: number;
+  bookmarks: BibleBookmark[];
   challengeSummary: ReadingChallengeSummary;
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
@@ -59,6 +60,7 @@ interface HomeScreenProps {
   onShare: () => void;
   onMenuClick: () => void;
   onOpenBooks: (filter?: SidebarBookFilter, andNavigate?: boolean) => void;
+  onOpenBookPicker?: (filter: SidebarBookFilter) => void;
   onContinueReading: () => void;
   onOpenReaderSelector?: () => void;
   onOpenStudy: () => void;
@@ -75,6 +77,8 @@ interface HomeScreenProps {
   onSelectChapter: (chapter: number) => void;
   onGoHome?: () => void;
   onOpenVerse: (bookAbrev: string, chapter: number, verseNumber: number) => void;
+  onAddBookmark: (bookAbrev: string, chapter: number, verseNumber?: number, label?: string) => void;
+  onRemoveBookmark: (id: string) => void;
   onShareContent: (payload: SharePayload) => void | Promise<void>;
   availableAppUpdate?: { version: string; currentVersion: string; publishedAt?: string; } | null;
   onOpenAppUpdate?: () => void;
@@ -83,18 +87,19 @@ interface HomeScreenProps {
 
 export function HomeScreen(props: HomeScreenProps) {
   const {
-    books, selectedBook, selectedChapter, bookmarksCount, challengeSummary, isDarkMode,
+    books, selectedBook, selectedChapter, bookmarksCount, bookmarks, challengeSummary, isDarkMode,
     onToggleDarkMode, fontSize, setFontSize, accentColor, setAccentColor, voiceURI, setVoiceURI,
     keepScreenOn, setKeepScreenOn, startupPage, setStartupPage, homeSections, setHomeSections,
-    onShare, onMenuClick, onOpenBooks, onContinueReading, onOpenReaderSelector, onOpenStudy,
+    onShare, onMenuClick, onOpenBooks, onOpenBookPicker, onContinueReading, onOpenReaderSelector, onOpenStudy,
     onOpenDailyExperience, onOpenFavorites, onOpenGame, onOpenSearch, onOpenPlans, onOpenOpinions, onOpenDictionary, onOpenUser, onOpenAboutLegal,
-    onGoHome, onOpenVerse, onShareContent, availableAppUpdate, onOpenAppUpdate, onDismissAppUpdate,
+    onGoHome, onOpenVerse, onAddBookmark, onRemoveBookmark, onShareContent, availableAppUpdate, onOpenAppUpdate, onDismissAppUpdate,
     onSelectBook, onSelectChapter,
   } = props;
 
   const { t, i18n } = useTranslation();
   const [savedDailyImageIds, setSavedDailyImageIds] = useState<string[]>(() => readStoredSavedDailyImages());
   const [activeImageResourceId, setActiveImageResourceId] = useState<string | null>(null);
+  const [activeImageVerseReference, setActiveImageVerseReference] = useState<DailyResourceCard['verseReference'] | null>(null);
   const [isMobileViewport, setIsMobileViewport] = useState(() => (typeof window === 'undefined' ? false : window.innerWidth < 1024));
   const [isMobileDeferredContentReady, setIsMobileDeferredContentReady] = useState(() => (typeof window === 'undefined' ? true : window.innerWidth >= 1024));
   const [dailyVerse, setDailyVerse] = useState<any>(null);
@@ -271,6 +276,7 @@ export function HomeScreen(props: HomeScreenProps) {
       if (!asset) return;
       setSharedImageAsset((curr: any) => { revokeVerseImageAsset(curr); return asset; });
       setActiveImageResourceId(resource.id);
+      setActiveImageVerseReference(resource.verseReference ?? null);
       setSharedImageTitle(referenceLabel);
       setSharedImageText(previewText);
       setImageSheetMode('preview');
@@ -317,7 +323,7 @@ export function HomeScreen(props: HomeScreenProps) {
           onClick={onClick}
           className={cn(
             "flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-bold tracking-wide transition-all",
-            isDarkMode ? "text-white/60 hover:text-white" : "text-[#102542]/60 hover:text-[#102542]"
+            isDarkMode ? "text-white/60 hover:text-white" : "text-[#102542]/60 hover:text-[var(--primary)]"
           )}
         >
           {label}
@@ -345,7 +351,7 @@ export function HomeScreen(props: HomeScreenProps) {
                       key={idx}
                       onClick={() => { item.onClick(); setIsOpen(false); }}
                       className={cn(
-                        "text-left text-[13px] font-medium transition-colors hover:text-[#1b8be0]",
+                        "text-left text-[13px] font-medium transition-colors hover:text-[var(--primary)]",
                         isDarkMode ? "text-white/70" : "text-slate-600"
                       )}
                     >
@@ -362,7 +368,7 @@ export function HomeScreen(props: HomeScreenProps) {
   };
 
   const WebNavItem = ({ label, onClick, active, isDarkMode }: { label: string, onClick?: () => void, active?: boolean, isDarkMode?: boolean }) => (
-    <button onClick={onClick} className={cn("px-4 py-2 rounded-xl text-sm font-bold tracking-wide transition-all", isDarkMode ? "text-white/60 hover:text-white hover:bg-white/5" : "text-[#102542]/60 hover:text-[#102542] hover:bg-[#102542]/5", active && "text-[#1b8be0]")}>{label}</button>
+    <button onClick={onClick} className={cn("px-4 py-2 rounded-xl text-sm font-bold tracking-wide transition-all", isDarkMode ? "text-white/60 hover:text-[var(--primary)] hover:bg-[var(--primary)]/10" : "text-[#102542]/60 hover:text-[var(--primary)] hover:bg-[#102542]/5", active && "text-[var(--primary)]")}>{label}</button>
   );
 
   const companionSections = dailyContent.sections.map(s => ({ ...s, title: getDailyCompanionSectionTitle(s.kind, mobileCopy), label: getDailyCompanionLabel(s.kind, t) }));
@@ -393,7 +399,20 @@ export function HomeScreen(props: HomeScreenProps) {
             await downloadVerseImage(sharedImageAsset);
           }
         }}
-        isSaved={!!activeImageResourceId && savedDailyImageIds.includes(activeImageResourceId)} onToggleSaved={() => activeImageResourceId && setSavedDailyImageIds(curr => curr.includes(activeImageResourceId) ? curr.filter(id => id !== activeImageResourceId) : [activeImageResourceId, ...curr])}
+        isSaved={activeImageVerseReference
+          ? bookmarks.some((bookmark) => bookmark.bookAbrev.toUpperCase() === activeImageVerseReference.bookAbrev.toUpperCase() && bookmark.chapter === activeImageVerseReference.chapter && bookmark.verseNumber === activeImageVerseReference.verseNumber)
+          : !!activeImageResourceId && savedDailyImageIds.includes(activeImageResourceId)}
+        onToggleSaved={activeImageVerseReference ? () => {
+          const reference = activeImageVerseReference;
+          const favorite = bookmarks.find((bookmark) => bookmark.bookAbrev.toUpperCase() === reference.bookAbrev.toUpperCase() && bookmark.chapter === reference.chapter && bookmark.verseNumber === reference.verseNumber);
+          if (favorite) onRemoveBookmark(favorite.id);
+          else onAddBookmark(reference.bookAbrev, reference.chapter, reference.verseNumber, currentLanguage.startsWith('en') ? reference.labelEn : reference.labelEs);
+        } : activeImageResourceId ? () => setSavedDailyImageIds((current) => current.includes(activeImageResourceId) ? current.filter((id) => id !== activeImageResourceId) : [activeImageResourceId, ...current]) : undefined}
+        onViewInBible={activeImageVerseReference ? () => {
+          const reference = activeImageVerseReference;
+          setIsImageShareSheetOpen(false);
+          onOpenVerse(reference.bookAbrev, reference.chapter, reference.verseNumber);
+        } : undefined}
         headerBadge={imageSheetMode === 'preview' ? t('app.image_of_day') : t('app.share_verse_image')} headerTitle={imageSheetMode === 'preview' ? t('share_sheet.preview_title') : t('share_sheet.share_title')} headerSubtitle={imageSheetMode === 'preview' ? t('share_sheet.preview_subtitle') : t('share_sheet.share_subtitle')}
       />
 
@@ -407,7 +426,7 @@ export function HomeScreen(props: HomeScreenProps) {
               <div className="min-w-0"><p className="truncate font-serif text-xl font-bold leading-none text-white">{t('app.title')}</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.26em] text-[#7fb8ff]">RV1960</p></div>
             </div>
           </div>
-          <button onClick={() => setIsHelpModalOpen(true)} className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white"><HelpCircle className="h-5 w-5" /></button>
+          <button onClick={() => setIsHelpModalOpen(true)} className="help-action flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white"><HelpCircle className="h-5 w-5 text-sky-400" /></button>
         </header>
 
         {/* HEADER WEB */}
@@ -418,8 +437,8 @@ export function HomeScreen(props: HomeScreenProps) {
                 <button
                   onClick={onMenuClick}
                   className={cn(
-                    "p-2 rounded-xl transition-all",
-                    isDarkMode ? "text-white/60 hover:text-white hover:bg-white/5" : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                    "theme-toggle-action p-2 rounded-xl transition-all",
+                    isDarkMode ? "text-white/60 hover:text-[var(--primary)] hover:bg-[var(--primary)]/10" : "text-slate-500 hover:text-[var(--primary)] hover:bg-[var(--primary)]/5"
                   )}
                   title="Abrir menú"
                 >
@@ -433,7 +452,7 @@ export function HomeScreen(props: HomeScreenProps) {
                     <h1 className={cn('font-serif text-base xl:text-xl font-bold transition-colors whitespace-nowrap overflow-hidden', isDarkMode ? 'text-white' : 'text-slate-900')}>
                       {t('app.title')}
                     </h1>
-                    <p className="text-[9px] xl:text-[10px] font-semibold uppercase tracking-[0.2em] text-[#7fb8ff] leading-none">RV1960</p>
+                    <p className="text-[9px] xl:text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--primary)] leading-none">RV1960</p>
                   </div>
                 </div>
               </div>
@@ -441,8 +460,8 @@ export function HomeScreen(props: HomeScreenProps) {
                 <button
                   onClick={handleHomeClick}
                   className={cn(
-                    "p-2 rounded-xl transition-all",
-                    isDarkMode ? "text-white/60 hover:text-white hover:bg-white/5" : "text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                    "help-action p-2 rounded-xl transition-all",
+                    isDarkMode ? "text-white/60 hover:text-[var(--primary)] hover:bg-[var(--primary)]/10" : "text-slate-500 hover:text-[var(--primary)] hover:bg-[var(--primary)]/5"
                   )}
                   title="Inicio"
                 >
@@ -451,22 +470,12 @@ export function HomeScreen(props: HomeScreenProps) {
                 <WebNavDropdown
                   label="Biblia y Estudio"
                   isDarkMode={isDarkMode}
-                  onClick={() => onOpenBooks('all', true)}
+                  onClick={() => { if (onOpenBookPicker) onOpenBookPicker('all'); else onOpenBooks('all', true); }}
                   items={[
-                    { label: 'Toda la Biblia', onClick: () => {
-                      const book = books[0];
-                      if (book) { onSelectBook(book); onSelectChapter(1); onOpenBooks('all', true); }
-                    }},
-                    { label: 'Antiguo Testamento', onClick: () => {
-                      const book = books.find(b => b.testament.toLowerCase().includes('antiguo') || b.testament.toLowerCase().includes('old'));
-                      if (book) { onSelectBook(book); onSelectChapter(1); onOpenBooks('old', true); }
-                    }},
-                    { label: 'Nuevo Testamento', onClick: () => {
-                      const book = books.find(b => !b.testament.toLowerCase().includes('antiguo') && !b.testament.toLowerCase().includes('old'));
-                      if (book) { onSelectBook(book); onSelectChapter(1); onOpenBooks('new', true); }
-                    }},
+                    { label: 'Toda la Biblia', onClick: () => onOpenBookPicker?.('all') },
+                    { label: 'Antiguo Testamento', onClick: () => onOpenBookPicker?.('old') },
+                    { label: 'Nuevo Testamento', onClick: () => onOpenBookPicker?.('new') },
                     { label: 'Estudio con IA', onClick: onOpenStudy },
-                    { label: 'Opiniones', onClick: onOpenOpinions ?? (() => {}) },
                     { label: 'Diccionario', onClick: onOpenDictionary ?? (() => {}) },
                   ]}
                 />
@@ -500,20 +509,11 @@ export function HomeScreen(props: HomeScreenProps) {
               </nav>
             </div>
             <div className="flex items-center gap-2 xl:gap-4 shrink-0">
-              <button
-                onClick={() => i18n.changeLanguage(currentLanguage === 'es' ? 'en' : 'es')}
-                className={cn(
-                  "flex items-center gap-2 px-2 xl:px-3 py-1.5 rounded-full border text-[10px] xl:text-xs font-bold transition-all",
-                  isDarkMode ? "bg-white/5 border-white/10 text-white/70 hover:bg-white/10" : "bg-slate-100 border-slate-200 text-slate-700 hover:bg-slate-200"
-                )}
-              >
-                <Globe className="h-3 xl:h-3.5 w-3 xl:w-3.5" />
-                <span>{currentLanguage === 'es' ? 'Español' : 'English'}</span>
-              </button>
+              <WebNavItem label={currentLanguage === 'en' ? 'Opinions' : 'Opiniones'} onClick={onOpenOpinions ?? (() => {})} isDarkMode={isDarkMode} />
 
               <button
                 onClick={onOpenUser}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-[#1b8be0] text-white text-xs font-bold hover:bg-[#2597eb] transition-all shadow-lg shadow-blue-500/20"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--primary)] text-white text-xs font-bold hover:bg-[var(--primary-hover)] transition-all shadow-lg shadow-blue-500/20"
               >
                 <User className="h-4 w-4" />
                 <span>Iniciar Sesión</span>
@@ -528,7 +528,7 @@ export function HomeScreen(props: HomeScreenProps) {
                   )}
                   title={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
                 >
-                  {isDarkMode ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                  {isDarkMode ? <Sun className="h-5 w-5 text-amber-300" /> : <Moon className="h-5 w-5 text-rose-400" />}
                 </button>
 
                 <button
@@ -540,7 +540,7 @@ export function HomeScreen(props: HomeScreenProps) {
                   )}
                   title="Ayuda"
                 >
-                  <HelpCircle className="h-5 w-5" />
+                  <HelpCircle className="help-action-icon h-5 w-5 text-sky-500" />
                 </button>
               </div>
             </div>
@@ -571,9 +571,9 @@ export function HomeScreen(props: HomeScreenProps) {
                 </div>
               </form>
               <div className="mt-4 flex flex-wrap items-center justify-center gap-6 text-[11px] font-bold uppercase tracking-widest text-white/40">
-                 {['Toda la Biblia', 'Antiguo Testamento', 'Nuevo Testamento'].map(f => <label key={f} className="flex items-center gap-2 cursor-pointer hover:text-white"><input type="radio" name="filter" className="accent-[#1b8be0]" defaultChecked={f==='Toda la Biblia'} /> {f}</label>)}
+                 {['Toda la Biblia', 'Antiguo Testamento', 'Nuevo Testamento'].map(f => <label key={f} className="flex items-center gap-2 cursor-pointer hover:text-white"><input type="radio" name="filter" className="accent-[var(--primary)]" defaultChecked={f==='Toda la Biblia'} /> {f}</label>)}
                  <div className="h-4 w-px bg-white/10" />
-                 {['Solo Biblia', 'Diccionario'].map(f => <label key={f} className="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" className="accent-[#1b8be0]" defaultChecked={f==='Solo Biblia'} /> {f}</label>)}
+                 {['Solo Biblia', 'Diccionario'].map(f => <label key={f} className="flex items-center gap-2 cursor-pointer hover:text-white"><input type="checkbox" className="accent-[var(--primary)]" defaultChecked={f==='Solo Biblia'} /> {f}</label>)}
               </div>
             </div>
           </div>
@@ -625,7 +625,7 @@ export function HomeScreen(props: HomeScreenProps) {
                               <p className="text-xs uppercase tracking-widest text-[#78b8ff] mb-2">{item.reference}</p>
                               <p className="text-sm leading-6 text-white/78">{item.body}</p>
                               <div className="mt-4 flex gap-3">
-                                <button onClick={item.primaryAction} className="flex-1 flex items-center justify-center gap-2 rounded-full bg-[#1b8be0] py-3 text-[11px] font-bold uppercase text-white"><Volume2 className="h-4 w-4" />{item.primaryLabel}</button>
+                                <button onClick={item.primaryAction} className="flex-1 flex items-center justify-center gap-2 rounded-full bg-[var(--primary)] py-3 text-[11px] font-bold uppercase text-white"><Volume2 className="h-4 w-4" />{item.primaryLabel}</button>
                                 {item.secondaryAction && <button onClick={item.secondaryAction} className="flex-1 flex items-center justify-center gap-2 rounded-full border border-white/10 bg-white/5 py-3 text-[11px] font-bold uppercase text-white"><BookOpen className="h-4 w-4" />{item.secondaryLabel}</button>}
                               </div>
                             </div>
@@ -683,6 +683,7 @@ export function HomeScreen(props: HomeScreenProps) {
 
       <HelpGuideModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} isDarkMode={isDarkMode} />
       <MobileBottomNav items={mobileNavItems} />
+      <ScrollToTopButton targetSelector='[data-home-scroll-root="true"]' label={currentLanguage.startsWith('en') ? 'Back to top' : 'Volver arriba'} />
     </div>
   );
 }
@@ -763,7 +764,7 @@ function DailyImageCard({ label, resource, currentLanguage, isDarkMode, isSaved,
         <div className="absolute bottom-4 left-4 right-4 text-white"><p className="font-serif italic text-lg leading-tight line-clamp-3">{resource.quote || resource.title}</p></div>
       </div>
       <div className="mt-4 flex gap-2">
-        <button onClick={onOpenImage} className="flex-1 rounded-full bg-[#1b8be0] py-2 text-[10px] font-bold uppercase text-white">Ver</button>
+        <button onClick={onOpenImage} className="flex-1 rounded-full bg-[var(--primary)] py-2 text-[10px] font-bold uppercase text-white">Ver</button>
         <button onClick={onShare} className="flex-1 rounded-full border border-white/10 py-2 text-[10px] font-bold uppercase">Compartir</button>
       </div>
     </article>

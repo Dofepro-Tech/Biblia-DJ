@@ -139,7 +139,7 @@ export function AboutLegalModal({ isOpen, onClose, type, isDarkMode }: AboutLega
             <div className="p-6 border-t border-white/5 bg-black/5">
               <button
                 onClick={onClose}
-                className="w-full py-4 rounded-full bg-[#1b8be0] text-white font-bold uppercase tracking-widest text-xs hover:bg-[#2597eb] transition-all"
+                className="w-full py-4 rounded-full bg-[var(--primary)] text-white font-bold uppercase tracking-widest text-xs hover:bg-[var(--primary-hover)] transition-all"
               >
                 {t('app.ready')}
               </button>
