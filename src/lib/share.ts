@@ -135,26 +135,36 @@ export async function shareInstalledAndroidApp(options: NativeAppShareOptions): 
     return 'unsupported';
   }
 
-  try {
-    await NativeAppShare.shareInstalledApk({
-      title: normalizeShareField(options.title),
-      text: normalizeShareField(options.text),
-      fileName: normalizeShareField(options.fileName),
-      dialogTitle: normalizeShareField(options.dialogTitle),
-    });
+  // Primero intentamos compartir el enlace de descarga oficial, que es lo más útil
+  const downloadUrl = getAppShareUrl();
+  const shareData = {
+    title: options.title || 'Bíblia DJ',
+    text: options.text || 'Descarga la app de la Biblia con IA aquí:',
+    url: downloadUrl,
+  };
 
+  try {
+    // Compartimos el enlace usando el plugin estándar de Capacitor
+    await Share.share({
+      title: shareData.title,
+      text: shareData.text,
+      url: shareData.url,
+      dialogTitle: options.dialogTitle || shareData.title,
+    });
     return 'shared';
   } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      return 'cancelled';
+    console.error('Error sharing link, falling back to APK:', error);
+    // Si falla el enlace (raro), intentamos pasar el APK real como respaldo
+    try {
+      await NativeAppShare.shareInstalledApk({
+        title: normalizeShareField(options.title),
+        text: normalizeShareField(options.text),
+        fileName: normalizeShareField(options.fileName),
+        dialogTitle: normalizeShareField(options.dialogTitle),
+      });
+      return 'shared';
+    } catch (innerError) {
+      return 'unsupported';
     }
-
-    const errorMessage = error instanceof Error ? error.message.toLowerCase() : '';
-    if (errorMessage.includes('abort') || errorMessage.includes('cancel')) {
-      return 'cancelled';
-    }
-
-    console.error('Error sharing installed Android app:', error);
-    return 'unsupported';
   }
 }

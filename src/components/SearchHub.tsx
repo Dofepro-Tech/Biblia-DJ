@@ -5,16 +5,21 @@ import { MobileBottomNav, MobilePageFooter } from '@/src/components/MobileBottom
 import { searchBible } from '@/src/services/bibleApi';
 import { normalizeAppLanguage } from '@/src/lib/language';
 import type { BibleSearchResult } from '@/src/types';
+import { type AboutLegalType } from '@/src/components/AboutLegalModal';
 import { cn } from '@/src/lib/utils';
 import { useTranslation } from 'react-i18next';
 
 interface SearchHubProps {
+  initialQuery?: string;
   onGoBack: () => void;
   onGoHome: () => void;
   onOpenReader: () => void;
   onOpenPlans: () => void;
   onOpenFavorites: () => void;
   onOpenUser: () => void;
+  onOpenOpinions?: () => void;
+  onOpenDictionary?: () => void;
+  onOpenAboutLegal?: (type: AboutLegalType) => void;
   onOpenVerse: (bookAbrev: string, chapter: number, verseNumber: number) => void;
 }
 
@@ -37,11 +42,11 @@ const SEARCH_EXAMPLES = {
   ],
 };
 
-export function SearchHub({ onGoBack, onGoHome, onOpenReader, onOpenPlans, onOpenFavorites, onOpenUser, onOpenVerse }: SearchHubProps) {
-  const { i18n } = useTranslation();
+export function SearchHub({ initialQuery, onGoBack, onGoHome, onOpenReader, onOpenPlans, onOpenFavorites, onOpenUser, onOpenOpinions, onOpenDictionary, onOpenAboutLegal, onOpenVerse }: SearchHubProps) {
+  const { t, i18n } = useTranslation();
   const currentLanguage = normalizeAppLanguage(i18n.resolvedLanguage || i18n.language);
   const [activeTab, setActiveTab] = useState<SearchTab>('bible');
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(initialQuery || '');
   const [scope, setScope] = useState(currentLanguage === 'en' ? 'All' : 'Todo');
   const [results, setResults] = useState<BibleSearchResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -126,10 +131,10 @@ export function SearchHub({ onGoBack, onGoHome, onOpenReader, onOpenPlans, onOpe
   const mobileNavItems = useMemo(() => ([
     { id: 'home', label: currentLanguage === 'en' ? 'Home' : 'Inicio', icon: <House className="h-5 w-5" />, onClick: onGoHome },
     { id: 'reader', label: currentLanguage === 'en' ? 'Bible' : 'Biblia', icon: <BookOpen className="h-5 w-5" />, onClick: onOpenReader },
-    { id: 'search', label: copy.title, icon: <Search className="h-5 w-5" />, onClick: () => undefined, active: true },
-    { id: 'plans', label: currentLanguage === 'en' ? 'Plans' : 'Planes', icon: <Calendar className="h-5 w-5" />, onClick: onOpenPlans },
-    { id: 'favorites', label: currentLanguage === 'en' ? 'Saved' : 'Guardados', icon: <Heart className="h-5 w-5" />, onClick: onOpenFavorites },
-    { id: 'user', label: currentLanguage === 'en' ? 'User' : 'Usuario', icon: <User className="h-5 w-5" />, onClick: onOpenUser },
+    { id: 'search', label: t('menu.search'), icon: <Search className="h-5 w-5" />, onClick: () => undefined, active: true },
+    { id: 'plans', label: t('menu.plans'), icon: <Calendar className="h-5 w-5" />, onClick: onOpenPlans },
+    { id: 'favorites', label: t('menu.favorites'), icon: <Heart className="h-5 w-5" />, onClick: onOpenFavorites },
+    { id: 'user', label: t('menu.user'), icon: <User className="h-5 w-5" />, onClick: onOpenUser },
   ]), [copy.title, currentLanguage, onGoHome, onOpenFavorites, onOpenPlans, onOpenReader, onOpenUser]);
 
   return (
@@ -257,7 +262,12 @@ export function SearchHub({ onGoBack, onGoHome, onOpenReader, onOpenPlans, onOpe
           </section>
         )}
 
-        <MobilePageFooter className="mt-8" />
+        <MobilePageFooter
+        className="mt-8"
+        onOpenAboutLegal={onOpenAboutLegal}
+        onOpenOpinions={onOpenOpinions}
+        onOpenDictionary={onOpenDictionary}
+      />
       </div>
 
       <MobileBottomNav items={mobileNavItems} />

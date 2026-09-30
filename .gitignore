@@ -26,3 +26,5 @@ reference_dump.xml
 release/*.zip
 release/biblia-dj-netlify-upload/
 Documentacion.md
+.idea/caches/
+*.bak

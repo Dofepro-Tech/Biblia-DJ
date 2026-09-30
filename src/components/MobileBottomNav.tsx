@@ -1,7 +1,9 @@
-import { Github, Globe, Linkedin, MessageCircle } from 'lucide-react';
+import { Github, Globe, Linkedin, MessageCircle, Target, Eye, Star, FileText, Shield } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { type AboutLegalType } from '@/src/components/AboutLegalModal';
 import { BrandSeal } from '@/src/components/BrandSeal';
 import { cn } from '@/src/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 export interface MobileBottomNavItem {
   id: string;
@@ -18,6 +20,9 @@ interface MobileBottomNavProps {
 
 interface MobilePageFooterProps {
   className?: string;
+  onOpenAboutLegal?: (type: AboutLegalType) => void;
+  onOpenOpinions?: () => void;
+  onOpenDictionary?: () => void;
 }
 
 const SUPPORT_EMAIL = 'dofeprotech@gmail.com';
@@ -134,61 +139,62 @@ export function MobileBottomNav({ items, className }: MobileBottomNavProps) {
   );
 }
 
-export function MobilePageFooter({ className }: MobilePageFooterProps) {
+export function MobilePageFooter({ className, onOpenAboutLegal, onOpenOpinions, onOpenDictionary }: MobilePageFooterProps) {
+  const { t } = useTranslation();
+
   return (
-    <footer className={cn('w-full pt-5', className)}>
-      <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-center gap-x-2 gap-y-1 border-t border-white/10 px-2 py-3 text-center font-sans text-[10px] font-medium leading-4 text-white/68 lg:text-[11px]">
-        <BrandSeal className="h-4 w-4 shrink-0 opacity-85" showWordmark={false} />
-        <span>© 2026 Dofepro-Tech</span>
-        <span className="text-white/30">·</span>
-        <a
-          href={SUPPORT_WHATSAPP_URL}
-          target="_blank"
-          rel="noreferrer"
-          aria-label="WhatsApp 8492618830"
-          title="WhatsApp 8492618830"
-          className="inline-flex h-6 w-6 items-center justify-center rounded-full text-inherit transition-colors hover:text-white"
-        >
-          <MessageCircle className="h-4 w-4" aria-hidden="true" />
-        </a>
-        <span className="text-white/30">·</span>
-        <a
-          href={`mailto:${SUPPORT_EMAIL}`}
-          className="break-all text-inherit underline-offset-2 transition-colors hover:text-white hover:underline"
-        >
-          {SUPPORT_EMAIL}
-        </a>
-        <span className="text-white/30">·</span>
-        <a
-          href={WEBSITE_URL}
-          target="_blank"
-          rel="noreferrer"
-          aria-label="Sitio web dofepro.do"
-          title="dofepro.do"
-          className="inline-flex h-6 w-6 items-center justify-center rounded-full text-inherit transition-colors hover:text-white"
-        >
-          <Globe className="h-4 w-4" aria-hidden="true" />
-        </a>
-        <a
-          href={GITHUB_URL}
-          target="_blank"
-          rel="noreferrer"
-          aria-label="GitHub"
-          title="GitHub"
-          className="inline-flex h-6 w-6 items-center justify-center rounded-full text-inherit transition-colors hover:text-white"
-        >
-          <Github className="h-4 w-4" aria-hidden="true" />
-        </a>
-        <a
-          href={LINKEDIN_URL}
-          target="_blank"
-          rel="noreferrer"
-          aria-label="LinkedIn"
-          title="LinkedIn"
-          className="inline-flex h-6 w-6 items-center justify-center rounded-full text-inherit transition-colors hover:text-white"
-        >
-          <Linkedin className="h-4 w-4" aria-hidden="true" />
-        </a>
+    <footer className={cn('w-full mt-auto pt-10 pb-28 lg:pb-8', className)}>
+      <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-center gap-6 px-6 text-center">
+        <div className="h-px w-full max-w-4xl bg-gradient-to-r from-transparent via-white/5 to-transparent mb-1" />
+
+        <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 font-sans text-[10px] font-bold uppercase tracking-widest text-white/40">
+          <button onClick={() => onOpenAboutLegal?.('about')} className="hover:text-white transition-colors">{t('menu.about')}</button>
+          <button onClick={() => onOpenAboutLegal?.('mission')} className="hover:text-white transition-colors">{t('menu.mission')}</button>
+          <button onClick={() => onOpenAboutLegal?.('vision')} className="hover:text-white transition-colors">{t('menu.vision')}</button>
+          <button onClick={() => onOpenAboutLegal?.('values')} className="hover:text-white transition-colors">{t('menu.values')}</button>
+          <button onClick={() => onOpenOpinions?.()} className="hover:text-white transition-colors">Opiniones</button>
+          <button onClick={() => onOpenDictionary?.()} className="hover:text-white transition-colors">Diccionario</button>
+          <button onClick={() => onOpenAboutLegal?.('terms')} className="hover:text-white transition-colors">{t('menu.terms')}</button>
+          <button onClick={() => onOpenAboutLegal?.('privacy')} className="hover:text-white transition-colors">{t('menu.privacy')}</button>
+        </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 font-sans text-[10px] font-medium tracking-wide text-white/30">
+          <span className="text-white/40">© 2026 DOFEPRO-TECH</span>
+          <span className="hidden sm:inline opacity-20">•</span>
+
+          <div className="flex items-center gap-3">
+            <a
+              href={SUPPORT_WHATSAPP_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.2 transition-colors hover:text-[#25D366]"
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+              <span>WhatsApp</span>
+            </a>
+            <span className="opacity-20">•</span>
+            <a
+              href={`mailto:${SUPPORT_EMAIL}`}
+              className="flex items-center gap-1.2 transition-colors hover:text-white"
+            >
+              <span>{SUPPORT_EMAIL}</span>
+            </a>
+          </div>
+
+          <span className="hidden sm:inline opacity-20">•</span>
+
+          <div className="flex items-center gap-3">
+            <a href={WEBSITE_URL} target="_blank" rel="noreferrer" title="Website" className="transition-all hover:text-white opacity-40 hover:opacity-100">
+              <Globe className="h-3.5 w-3.5" />
+            </a>
+            <a href={GITHUB_URL} target="_blank" rel="noreferrer" title="GitHub" className="transition-all hover:text-white opacity-40 hover:opacity-100">
+              <Github className="h-3.5 w-3.5" />
+            </a>
+            <a href={LINKEDIN_URL} target="_blank" rel="noreferrer" title="LinkedIn" className="transition-all hover:text-white opacity-40 hover:opacity-100">
+              <Linkedin className="h-3.5 w-3.5" />
+            </a>
+          </div>
+        </div>
       </div>
     </footer>
   );

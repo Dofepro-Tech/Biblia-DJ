@@ -21,7 +21,7 @@ const downloadUrl = (
   process.env.VITE_APP_DOWNLOAD_URL
   || process.env.VITE_PLAY_STORE_URL
   || process.env.VITE_APP_SHARE_URL
-  || ''
+  || 'https://dofepro-tech.github.io/biblia-dj/'
 ).trim();
 const explicitUpdateUrl = (process.env.VITE_APP_UPDATE_URL || '').trim();
 const explicitApkUrl = (process.env.VITE_APP_APK_URL || '').trim();

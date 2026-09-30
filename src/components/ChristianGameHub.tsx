@@ -8,6 +8,7 @@ import { PanelNavButtons } from '@/src/components/PanelNavButtons';
 import { WordSearchBoard } from '@/src/components/game/WordSearchBoard';
 import { LEVELS, THEMES, type LevelDef } from '@/src/lib/wordBiblia/levels';
 import { generateWordSearch, type PlacedWord, type WordSearchGrid } from '@/src/lib/wordBiblia/wordSearch';
+import { type AboutLegalType } from '@/src/components/AboutLegalModal';
 import { cn } from '@/src/lib/utils';
 import { useTranslation } from 'react-i18next';
 
@@ -20,7 +21,10 @@ interface ChristianGameHubProps {
   onOpenFavorites?: () => void;
   onOpenSearch?: () => void;
   onOpenPlans?: () => void;
+  onOpenOpinions?: () => void;
+  onOpenDictionary?: () => void;
   onOpenUser?: () => void;
+  onOpenAboutLegal?: (type: AboutLegalType) => void;
   onShare: () => void;
   isDarkMode: boolean;
   onToggleDarkMode: () => void;
@@ -170,7 +174,10 @@ export function ChristianGameHub({
   onOpenFavorites,
   onOpenSearch,
   onOpenPlans,
+  onOpenOpinions,
+  onOpenDictionary,
   onOpenUser,
+  onOpenAboutLegal,
   onShare,
   isDarkMode,
   onToggleDarkMode,
@@ -213,13 +220,13 @@ export function ChristianGameHub({
     },
     {
       id: 'daily',
-      label: t('app.search_book'),
+      label: t('menu.search'),
       icon: <Search className="h-5 w-5" />,
       onClick: () => onOpenSearch?.(),
     },
     {
       id: 'favorites',
-      label: currentLanguage === 'en' ? 'Plans' : 'Planes',
+      label: t('menu.plans'),
       icon: <Calendar className="h-5 w-5" />,
       onClick: () => onOpenPlans?.(),
     },
@@ -231,7 +238,7 @@ export function ChristianGameHub({
     },
     {
       id: 'user',
-      label: currentLanguage === 'en' ? 'User' : 'Usuario',
+      label: t('menu.user'),
       icon: <User className="h-5 w-5" />,
       onClick: () => onOpenUser?.(),
     },
@@ -802,7 +809,12 @@ export function ChristianGameHub({
         </AnimatePresence>
       </div>
 
-      <MobilePageFooter className="mt-8" />
+      <MobilePageFooter
+        className="mt-8"
+        onOpenAboutLegal={onOpenAboutLegal}
+        onOpenOpinions={onOpenOpinions}
+        onOpenDictionary={onOpenDictionary}
+      />
 
       <MobileBottomNav items={mobileNavItems} />
     </div>

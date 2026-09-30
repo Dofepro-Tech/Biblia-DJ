@@ -54,6 +54,21 @@ export function useReaderPreferences() {
   const [accentColor, setAccentColor] = useState(() => readStoredString('bible_accent_color', 'blue'));
   const [voiceURI, setVoiceURI] = useState(() => readStoredString('bible_voice_uri', ''));
   const [hasSeenWelcome, setHasSeenWelcome] = useState(() => readStoredBoolean('bible_has_seen_welcome', false));
+  const [keepScreenOn, setKeepScreenOn] = useState(() => readStoredBoolean('bible_keep_screen_on', false));
+  const [startupPage, setStartupPage] = useState<'home' | 'reader'>(() => (readStoredString('bible_startup_page', 'home') as 'home' | 'reader'));
+  const [homeSections, setHomeSections] = useState(() => {
+    const saved = localStorage.getItem('bible_home_sections_v1');
+    return saved ? JSON.parse(saved) : {
+      dailyVerse: true,
+      devotional: true,
+      images: true,
+      news: true,
+      videos: true,
+      reflections: true,
+      testimonies: true,
+      game: true,
+    };
+  });
 
   useEffect(() => {
     if (!canUseBrowserStorage()) {
@@ -97,6 +112,30 @@ export function useReaderPreferences() {
     localStorage.setItem('bible_has_seen_welcome', String(hasSeenWelcome));
   }, [hasSeenWelcome]);
 
+  useEffect(() => {
+    if (!canUseBrowserStorage()) {
+      return;
+    }
+
+    localStorage.setItem('bible_keep_screen_on', String(keepScreenOn));
+  }, [keepScreenOn]);
+
+  useEffect(() => {
+    if (!canUseBrowserStorage()) {
+      return;
+    }
+
+    localStorage.setItem('bible_startup_page', startupPage);
+  }, [startupPage]);
+
+  useEffect(() => {
+    if (!canUseBrowserStorage()) {
+      return;
+    }
+
+    localStorage.setItem('bible_home_sections_v1', JSON.stringify(homeSections));
+  }, [homeSections]);
+
   return {
     isDarkMode,
     setIsDarkMode,
@@ -108,5 +147,11 @@ export function useReaderPreferences() {
     setVoiceURI,
     hasSeenWelcome,
     setHasSeenWelcome,
+    keepScreenOn,
+    setKeepScreenOn,
+    startupPage,
+    setStartupPage,
+    homeSections,
+    setHomeSections,
   };
 }

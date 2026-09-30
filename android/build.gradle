@@ -7,8 +7,8 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.13.0'
-        classpath 'com.google.gms:google-services:4.4.4'
+        classpath 'com.android.tools.build:gradle:8.13.2'
+        classpath 'com.google.gms:google-services:4.4.2'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -24,6 +24,16 @@ allprojects {
     }
 }
 
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android {
+                compileSdk = rootProject.ext.compileSdkVersion
+            }
+        }
+    }
+}
+
 subprojects { subproject ->
     afterEvaluate {
         if (!(subproject.name in ['capacitor-filesystem', 'capacitor-share'])) {
@@ -33,14 +43,14 @@ subprojects { subproject ->
         def androidExtension = subproject.extensions.findByName('android')
         if (androidExtension != null) {
             androidExtension.compileOptions {
-                sourceCompatibility JavaVersion.VERSION_22
-                targetCompatibility JavaVersion.VERSION_22
+                sourceCompatibility JavaVersion.VERSION_21
+                targetCompatibility JavaVersion.VERSION_21
             }
         }
 
         def kotlinExtension = subproject.extensions.findByName('kotlin')
         if (kotlinExtension != null && kotlinExtension.metaClass.respondsTo(kotlinExtension, 'jvmToolchain', Integer)) {
-            kotlinExtension.jvmToolchain(22)
+            kotlinExtension.jvmToolchain(21)
         }
     }
 }

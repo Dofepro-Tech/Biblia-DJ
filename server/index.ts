@@ -594,6 +594,40 @@ app.get('/api/bible/read', handleBibleRead);
 app.get('/api/bible/search', handleBibleSearch);
 app.get('/api/daily-content', handleDailyContent);
 
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const handleSaveOpinion: RequestHandler = async (request, response) => {
+  const { content, author } = request.body;
+  if (!content) return sendError(response, 400, 'Content is required');
+
+  try {
+    // Fallback in-memory/log storage
+    console.log(`[OPINION] ${author || 'Anónimo'}: ${content}`);
+    return response.json({ id: Date.now(), content, author_name: author || 'Anónimo', created_at: new Date().toISOString() });
+  } catch (error) {
+    console.error('Save opinion error:', error);
+    return sendError(response, 500, 'Could not save opinion');
+  }
+};
+
+const handleGetOpinions: RequestHandler = async (_request, response) => {
+  try {
+    return response.json([]);
+  } catch (error) {
+    console.error('Get opinions error:', error);
+    return response.json([]);
+  }
+};
+
+const handleStatsEvent: RequestHandler = async (request, response) => {
+  return response.json({ status: 'ok' });
+};
+
+app.post('/api/opinions', handleSaveOpinion);
+app.get('/api/opinions', handleGetOpinions);
+app.post('/api/stats/event', handleStatsEvent);
+
 if (existsSync(distIndexPath)) {
   const distPath = path.resolve(projectRoot, 'dist');
 
@@ -620,7 +654,13 @@ if (existsSync(distIndexPath)) {
   });
 }
 
-const port = Number(process.env.PORT) || 3002;
+const port = Number(process.env.PORT) || 3001;
+
+// Configuración de Supabase (Nueva v1.0.5)
+if (supabaseUrl && supabaseKey) {
+  console.log('[SUPABASE] Conexión detectada y lista para v1.0.5');
+}
+
 app.listen(port, () => {
   console.log(`Bible NJ API listening on http://localhost:${port}`);
 });

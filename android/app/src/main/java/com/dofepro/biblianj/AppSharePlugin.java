@@ -87,7 +87,7 @@ public class AppSharePlugin extends Plugin {
     private String sanitizeFileName(String fileName) {
         String candidate = getTrimmedValue(fileName);
         if (candidate.isEmpty()) {
-            return "biblia-nj-android.apk";
+            return "biblia-dj-android.apk";
         }
 
         String normalized = candidate.replaceAll("[^A-Za-z0-9._-]", "-");

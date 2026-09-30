@@ -43,6 +43,17 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+
+    configurations.all {
+        resolutionStrategy {
+            force 'androidx.core:core:1.15.0'
+            force 'androidx.core:core-ktx:1.15.0'
+            force 'androidx.activity:activity:1.10.0'
+            force 'androidx.activity:activity-ktx:1.10.0'
+            force 'androidx.browser:browser:1.8.0'
+        }
+    }
+
     signingConfigs {
         if (hasReleaseSigning) {
             release {
@@ -63,8 +74,8 @@ android {
             if (hasReleaseSigning) {
                 signingConfig signingConfigs.release
             }
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
