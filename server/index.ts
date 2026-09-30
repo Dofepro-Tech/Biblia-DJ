@@ -784,19 +784,40 @@ function getOpinionsSupabaseHeaders(extraHeaders: Record<string, string> = {}) {
 
 const handleSaveOpinion: RequestHandler = async (request, response) => {
   const content = typeof request.body?.content === 'string' ? request.body.content.trim() : '';
-  const author = typeof request.body?.author === 'string' ? request.body.author.trim().slice(0, 80) : '';
+  const submittedAuthor = typeof request.body?.author === 'string' ? request.body.author.trim().slice(0, 80) : '';
+  const submittedEmail = typeof request.body?.email === 'string' ? request.body.email.trim().slice(0, 254) : '';
   if (!content) return sendError(response, 400, 'Content is required');
   if (content.length > 2000) return sendError(response, 400, 'Opinion must be 2000 characters or fewer.');
+  if (submittedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(submittedEmail)) return sendError(response, 400, 'Introduce un correo electrónico válido.');
   if (!opinionsSupabaseUrl || !opinionsSupabaseKey) return sendError(response, 503, 'Opinions are not configured on the server yet.');
 
   try {
+    let author = submittedAuthor || 'Anonymous';
+    let authorEmail = submittedEmail || null;
+    const authorization = request.get('authorization') || '';
+    const accessToken = authorization.match(/^Bearer\s+(.+)$/i)?.[1];
+
+    if (accessToken) {
+      if (!supabaseAuthUrl || !supabaseAnonKey) return sendError(response, 503, 'Account verification is not configured.');
+      const profileResponse = await fetch(`${supabaseAuthUrl}/auth/v1/user`, {
+        headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${accessToken}` },
+      });
+      const profile = await profileResponse.json().catch(() => null) as { email?: string; user_metadata?: Record<string, unknown> } | null;
+      if (!profileResponse.ok || !profile) return sendError(response, 401, 'Tu sesión expiró. Inicia sesión de nuevo antes de publicar.');
+      const metadataName = profile.user_metadata?.full_name ?? profile.user_metadata?.name ?? profile.user_metadata?.display_name;
+      author = typeof metadataName === 'string' && metadataName.trim()
+        ? metadataName.trim().slice(0, 80)
+        : profile.email?.split('@')[0] || author;
+      authorEmail = profile.email || authorEmail;
+    }
+
     const result = await fetch(`${opinionsSupabaseUrl.replace(/\/$/, '')}/rest/v1/opinions?select=id,content,author_name,created_at`, {
       method: 'POST',
       headers: getOpinionsSupabaseHeaders({
         'Content-Type': 'application/json',
         Prefer: 'return=representation',
       }),
-      body: JSON.stringify({ content, author_name: author || 'Anonymous' }),
+      body: JSON.stringify({ content, author_name: author, author_email: authorEmail }),
     });
     const payload = await result.json().catch(() => null);
     if (!result.ok) {

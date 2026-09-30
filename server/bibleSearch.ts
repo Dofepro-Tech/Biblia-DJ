@@ -159,7 +159,11 @@ export async function searchBible(query: string, language: string, limit: number
   const apiKey = process.env.BIBLE_API_KEY;
   const spanishBibleId = process.env.BIBLE_API_ES_BIBLE_ID;
   if (normalizedLanguage === 'es' && apiKey && spanishBibleId) {
-    return searchApiBibleRvr1960(trimmedQuery, apiKey, spanishBibleId, safeLimit, safeOffset);
+    try {
+      return await searchApiBibleRvr1960(trimmedQuery, apiKey, spanishBibleId, safeLimit, safeOffset);
+    } catch (error) {
+      console.warn('API.Bible search failed; falling back to the bundled-source scan.', error);
+    }
   }
 
   const cacheKey = `${normalizedLanguage}:${normalizedQuery}`;
@@ -229,6 +233,10 @@ export async function searchBible(query: string, language: string, limit: number
   }
 
   const fullResponse = await searchCache.get(cacheKey)!;
+  // Never preserve a partial result: transient failures should be retried on the next search.
+  if (fullResponse.incomplete) {
+    searchCache.delete(cacheKey);
+  }
   return {
     ...fullResponse,
     results: fullResponse.results.slice(safeOffset, safeOffset + safeLimit),

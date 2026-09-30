@@ -14,6 +14,25 @@ interface Opinion {
   created_at: string;
 }
 
+interface OpinionAccount {
+  name: string;
+  email: string;
+  accessToken: string;
+}
+
+function readOpinionAccount(): OpinionAccount | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem('biblia_nj_user_session');
+    const session = raw ? JSON.parse(raw) as Partial<OpinionAccount> : null;
+    return session?.name && session.email && session.accessToken
+      ? { name: session.name, email: session.email, accessToken: session.accessToken }
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 interface OpinionsHubProps {
   onGoBack: () => void;
   onGoHome: () => void;
@@ -27,9 +46,11 @@ interface OpinionsHubProps {
 export function OpinionsHub({ onGoBack, onGoHome, onOpenReader, onOpenPlans, onOpenFavorites, onOpenUser, onOpenAboutLegal }: OpinionsHubProps) {
   const { t, i18n } = useTranslation();
   const currentLanguage = normalizeAppLanguage(i18n.resolvedLanguage || i18n.language);
+  const [accountSession] = useState<OpinionAccount | null>(readOpinionAccount);
   const [opinions, setOpinions] = useState<Opinion[]>([]);
   const [newOpinion, setNewOpinion] = useState('');
-  const [authorName, setAuthorName] = useState('');
+  const [authorName, setAuthorName] = useState(() => accountSession?.name ?? '');
+  const [authorEmail, setAuthorEmail] = useState(() => accountSession?.email ?? '');
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [requestError, setRequestError] = useState('');
@@ -66,8 +87,11 @@ export function OpinionsHub({ onGoBack, onGoHome, onOpenReader, onOpenPlans, onO
     try {
       const res = await fetch(resolveConfiguredApiUrl('/api/opinions'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: newOpinion, author: authorName }),
+        headers: {
+          'Content-Type': 'application/json',
+          ...(accountSession ? { Authorization: `Bearer ${accountSession.accessToken}` } : {}),
+        },
+        body: JSON.stringify({ content: newOpinion, author: authorName, email: authorEmail }),
       });
       if (res.ok) {
         setNewOpinion('');
@@ -120,8 +144,19 @@ export function OpinionsHub({ onGoBack, onGoHome, onOpenReader, onOpenPlans, onO
                 placeholder={currentLanguage === 'en' ? 'Your name (optional)' : 'Tu nombre (opcional)'}
                 value={authorName}
                 maxLength={80}
+                readOnly={Boolean(accountSession)}
                 onChange={(e) => setAuthorName(e.target.value)}
                 className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 outline-none focus:border-[var(--primary)] transition-all text-sm"
+              />
+              <input
+                type="email"
+                autoComplete="email"
+                placeholder={currentLanguage === 'en' ? 'Email address (optional)' : 'Correo electrónico (opcional)'}
+                value={authorEmail}
+                maxLength={254}
+                readOnly={Boolean(accountSession)}
+                onChange={(e) => setAuthorEmail(e.target.value)}
+                className="w-full bg-white/5 border border-white/10 rounded-2xl py-3 px-4 outline-none focus:border-[var(--primary)] transition-all text-sm read-only:opacity-65"
               />
               <textarea
                 placeholder={currentLanguage === 'en' ? 'What do you think about the app or today\'s reading?' : '¿Qué piensas de la app o del pasaje de hoy?'}
