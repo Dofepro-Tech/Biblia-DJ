@@ -15,6 +15,7 @@ import { OpinionsHub } from '@/src/components/OpinionsHub';
 import { DictionaryHub } from '@/src/components/DictionaryHub';
 import { UserAccessHub } from '@/src/components/UserAccessHub';
 import { ShareSheet } from '@/src/components/ShareSheet';
+import { DownloadAppModal } from '@/src/components/DownloadAppModal';
 import { SplashScreen } from '@/src/components/SplashScreen';
 import { RandomVerseModal } from '@/src/components/RandomVerseModal';
 import { AboutLegalModal, type AboutLegalType } from '@/src/components/AboutLegalModal';
@@ -149,6 +150,7 @@ export default function App() {
   }, [isNativePlatform]);
 
   const [isShareSheetOpen, setIsShareSheetOpen] = useState(false);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
   const [readerSelectorRequestId, setReaderSelectorRequestId] = useState(0);
   const [bookPickerFilter, setBookPickerFilter] = useState<SidebarBookFilter>('all');
   const [isDesktopViewport, setIsDesktopViewport] = useState(() => (typeof window === 'undefined' ? true : window.innerWidth >= 1024));
@@ -1034,6 +1036,7 @@ export default function App() {
             onOpenGame={openGameHub}
             onOpenSearch={openSearchHub}
             onOpenPlans={openReadingPlansHub}
+            onOpenDownloadModal={() => setIsDownloadModalOpen(true)}
             onOpenOpinions={() => navigateToMainView('opinions')}
             onOpenDictionary={() => navigateToMainView('dictionary')}
             onOpenUser={openUserHub}
@@ -1168,6 +1171,7 @@ export default function App() {
             onOpenGame={openGameHub}
             onOpenSearch={openSearchHub}
             onOpenPlans={openReadingPlansHub}
+            onOpenDownloadModal={() => setIsDownloadModalOpen(true)}
             onOpenOpinions={() => navigateToMainView('opinions')}
             onOpenDictionary={() => navigateToMainView('dictionary')}
             onOpenUser={openUserHub}
@@ -1257,6 +1261,12 @@ export default function App() {
         title={sharePayload.title}
         text={sharePayload.text}
         url={sharePayload.url}
+      />
+
+      <DownloadAppModal
+        isOpen={isDownloadModalOpen}
+        onClose={() => setIsDownloadModalOpen(false)}
+        isDarkMode={isDarkMode}
       />
 
       <AboutLegalModal

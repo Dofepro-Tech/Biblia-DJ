@@ -114,7 +114,11 @@
 }
 
 .theme-toggle-action:hover svg {
-  animation-duration: 1.4s;
+  animation: theme-glyph-hover-spin .9s linear infinite;
+}
+
+.theme-toggle-action:focus-visible svg {
+  animation: theme-glyph-hover-spin .9s linear infinite;
 }
 
 .theme-toggle-action:hover::after {
@@ -158,6 +162,10 @@
 @keyframes theme-glyph-turn {
   0%, 100% { transform: rotate(0deg) scale(1); }
   50% { transform: rotate(28deg) scale(1.08); }
+}
+
+@keyframes theme-glyph-hover-spin {
+  to { transform: rotate(360deg); }
 }
 
 @keyframes help-icon-wiggle {

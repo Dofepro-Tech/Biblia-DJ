@@ -1,4 +1,19 @@
 import { Capacitor } from '@capacitor/core';
+import { resolveConfiguredApiUrl } from '@/src/lib/apiConfig';
+
+const INSTALLATION_ID_KEY = 'biblia-dj-analytics-installation-id';
+
+function getInstallationId() {
+  try {
+    const existingId = window.localStorage.getItem(INSTALLATION_ID_KEY);
+    if (existingId) return existingId;
+    const installationId = window.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    window.localStorage.setItem(INSTALLATION_ID_KEY, installationId);
+    return installationId;
+  } catch {
+    return undefined;
+  }
+}
 
 // Nota: Para que esto funcione en Android, debes instalar el plugin:
 // npm install @capacitor-firebase/analytics
@@ -6,6 +21,7 @@ import { Capacitor } from '@capacitor/core';
 
 export type AnalyticsEvent =
   | { name: 'app_open'; params?: { platform: string; version: string } }
+  | { name: 'apk_download_click'; params?: undefined }
   | { name: 'bible_read'; params: { book: string; chapter: number } }
   | { name: 'search_query'; params: { query: string } }
   | { name: 'share_content'; params: { type: 'apk' | 'verse' | 'image' } }
@@ -24,12 +40,14 @@ export async function trackEvent(event: AnalyticsEvent) {
   // 2. Envío al Servidor Propio (Ligero y para todas las plataformas)
   try {
     // Usamos el API de beacon o fetch normal de forma asíncrona para no bloquear la UI
-    void fetch('/api/stats/event', {
+    void fetch(resolveConfiguredApiUrl('/api/stats/event'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        ...event,
+        name: event.name,
         platform,
+        appVersion: (window as any).__APP_VERSION__ || '1.0.4',
+        installationId: event.name === 'app_open' ? getInstallationId() : undefined,
         timestamp: new Date().toISOString(),
       }),
     });

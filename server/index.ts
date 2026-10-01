@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import cors from 'cors';
@@ -853,7 +854,48 @@ const handleGetOpinions: RequestHandler = async (_request, response) => {
   }
 };
 const handleStatsEvent: RequestHandler = async (request, response) => {
-  return response.json({ status: 'ok' });
+  const eventName = request.body?.name;
+  const allowedEvents = new Set(['app_open', 'apk_download_click', 'bible_read', 'search_query', 'share_content', 'game_start', 'theme_change']);
+  const platform = typeof request.body?.platform === 'string' ? request.body.platform.slice(0, 20) : 'web';
+  const appVersion = typeof request.body?.appVersion === 'string' ? request.body.appVersion.slice(0, 32) : null;
+  const installationId = typeof request.body?.installationId === 'string' ? request.body.installationId.slice(0, 128) : '';
+  if (typeof eventName !== 'string' || !allowedEvents.has(eventName)) return sendError(response, 400, 'Invalid analytics event.');
+  if (!opinionsSupabaseUrl || !opinionsSupabaseKey) return sendError(response, 503, 'Analytics storage is not configured.');
+
+  try {
+    const baseUrl = opinionsSupabaseUrl.replace(/\/$/, '');
+    if (eventName === 'app_open' && installationId && ['android', 'ios'].includes(platform)) {
+      const installationHash = createHash('sha256').update(installationId).digest('hex');
+      const installResponse = await fetch(`${baseUrl}/rest/v1/app_installations`, {
+        method: 'POST',
+        headers: getOpinionsSupabaseHeaders({
+          'Content-Type': 'application/json',
+          Prefer: 'resolution=ignore-duplicates,return=minimal',
+        }),
+        body: JSON.stringify({ installation_id_hash: installationHash, platform, app_version: appVersion }),
+      });
+      if (!installResponse.ok) {
+        const payload = await installResponse.text();
+        console.error('[ANALYTICS] Supabase install insert failed:', installResponse.status, payload);
+        return sendError(response, 502, 'Could not record app installation.');
+      }
+    }
+
+    const eventResponse = await fetch(`${baseUrl}/rest/v1/app_analytics_events`, {
+      method: 'POST',
+      headers: getOpinionsSupabaseHeaders({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+      body: JSON.stringify({ event_name: eventName, platform, app_version: appVersion }),
+    });
+    if (!eventResponse.ok) {
+      const payload = await eventResponse.text();
+      console.error('[ANALYTICS] Supabase event insert failed:', eventResponse.status, payload);
+      return sendError(response, 502, 'Could not record analytics event.');
+    }
+    return response.status(202).json({ status: 'accepted' });
+  } catch (error) {
+    console.error('Analytics event error:', error);
+    return sendError(response, 502, 'Could not record analytics event.');
+  }
 };
 
 app.post('/api/opinions', handleSaveOpinion);

@@ -17,7 +17,7 @@ import { canNativeShareVerseImage, createVerseImageAsset, downloadVerseImage, na
 import { fetchChapter } from '@/src/services/bibleApi';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
-import { BookHeart, BookOpen, Bookmark, Calendar, ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Flame, Gamepad2, Heart, House, Image, LibraryBig, Menu, Moon, Newspaper, PlayCircle, Quote, Search, Share2, Sparkles, Star, Sun, SunMoon, User, Volume2, X, HelpCircle } from 'lucide-react';
+import { BookHeart, BookOpen, Bookmark, Calendar, ChevronDown, ChevronLeft, ChevronRight, Download, ExternalLink, Flame, Gamepad2, Heart, House, Image, LibraryBig, Menu, Moon, Newspaper, PlayCircle, Quote, Search, Share2, Sparkles, Star, Sun, SunMoon, User, Volume2, X, HelpCircle } from 'lucide-react';
 
 const SAVED_DAILY_IMAGE_STORAGE_KEY = 'biblia_nj_saved_daily_images_v1';
 
@@ -69,6 +69,7 @@ interface HomeScreenProps {
   onOpenGame: () => void;
   onOpenSearch?: (query?: string) => void;
   onOpenPlans?: () => void;
+  onOpenDownloadModal?: () => void;
   onOpenOpinions?: () => void;
   onOpenDictionary?: () => void;
   onOpenUser?: () => void;
@@ -91,7 +92,7 @@ export function HomeScreen(props: HomeScreenProps) {
     onToggleDarkMode, fontSize, setFontSize, accentColor, setAccentColor, voiceURI, setVoiceURI,
     keepScreenOn, setKeepScreenOn, startupPage, setStartupPage, homeSections, setHomeSections,
     onShare, onMenuClick, onOpenBooks, onOpenBookPicker, onContinueReading, onOpenReaderSelector, onOpenStudy,
-    onOpenDailyExperience, onOpenFavorites, onOpenGame, onOpenSearch, onOpenPlans, onOpenOpinions, onOpenDictionary, onOpenUser, onOpenAboutLegal,
+    onOpenDailyExperience, onOpenFavorites, onOpenGame, onOpenSearch, onOpenPlans, onOpenDownloadModal, onOpenOpinions, onOpenDictionary, onOpenUser, onOpenAboutLegal,
     onGoHome, onOpenVerse, onAddBookmark, onRemoveBookmark, onShareContent, availableAppUpdate, onOpenAppUpdate, onDismissAppUpdate,
     onSelectBook, onSelectChapter,
   } = props;
@@ -426,7 +427,10 @@ export function HomeScreen(props: HomeScreenProps) {
               <div className="min-w-0"><p className="truncate font-serif text-xl font-bold leading-none text-white">{t('app.title')}</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.26em] text-[#7fb8ff]">RV1960</p></div>
             </div>
           </div>
-          <button onClick={() => setIsHelpModalOpen(true)} className="help-action flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white"><HelpCircle className="h-5 w-5 text-sky-400" /></button>
+          <div className="flex items-center gap-2">
+            <button onClick={onOpenDownloadModal} className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--primary)]/35 bg-[var(--primary)]/15 text-[var(--primary)]" title="Descargar APK" aria-label="Descargar APK"><Download className="h-5 w-5" /></button>
+            <button onClick={() => setIsHelpModalOpen(true)} className="help-action flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white"><HelpCircle className="h-5 w-5 text-sky-400" /></button>
+          </div>
         </header>
 
         {/* HEADER WEB */}
@@ -437,7 +441,7 @@ export function HomeScreen(props: HomeScreenProps) {
                 <button
                   onClick={onMenuClick}
                   className={cn(
-                    "theme-toggle-action p-2 rounded-xl transition-all",
+                    "p-2 rounded-xl transition-all",
                     isDarkMode ? "text-white/60 hover:text-[var(--primary)] hover:bg-[var(--primary)]/10" : "text-slate-500 hover:text-[var(--primary)] hover:bg-[var(--primary)]/5"
                   )}
                   title="Abrir menú"
@@ -476,10 +480,10 @@ export function HomeScreen(props: HomeScreenProps) {
                     { label: 'Antiguo Testamento', onClick: () => onOpenBookPicker?.('old') },
                     { label: 'Nuevo Testamento', onClick: () => onOpenBookPicker?.('new') },
                     { label: 'Estudio con IA', onClick: onOpenStudy },
+                    { label: 'Planes de lectura', onClick: onOpenPlans ?? (() => {}) },
                     { label: 'Diccionario', onClick: onOpenDictionary ?? (() => {}) },
                   ]}
                 />
-                <WebNavItem label="Planes" onClick={onOpenPlans} isDarkMode={isDarkMode} />
                 <WebNavDropdown
                   label="Noticias"
                   isDarkMode={isDarkMode}
@@ -505,7 +509,6 @@ export function HomeScreen(props: HomeScreenProps) {
                   ]}
                 />
                 <WebNavItem label="Juegos" onClick={onOpenGame} isDarkMode={isDarkMode} />
-                <WebNavItem label="Favoritos" onClick={onOpenFavorites} isDarkMode={isDarkMode} />
               </nav>
             </div>
             <div className="flex items-center gap-2 xl:gap-4 shrink-0">
@@ -519,11 +522,20 @@ export function HomeScreen(props: HomeScreenProps) {
                 <span>Iniciar Sesión</span>
               </button>
 
+              <button
+                type="button"
+                onClick={onOpenDownloadModal}
+                className="inline-flex items-center gap-2 rounded-full border border-[var(--primary)]/35 bg-[var(--primary)]/12 px-3 py-2 text-xs font-bold text-[var(--primary)] transition-all hover:-translate-y-0.5 hover:bg-[var(--primary)]/20"
+              >
+                <Download className="h-4 w-4" />
+                <span>Descargar APK</span>
+              </button>
+
               <div className="flex items-center gap-1 ml-2">
                 <button
                   onClick={onToggleDarkMode}
                   className={cn(
-                    "p-2 rounded-xl transition-all",
+                    "theme-toggle-action p-2 rounded-xl transition-all",
                     isDarkMode ? "text-white/50 hover:text-white hover:bg-white/5" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
                   )}
                   title={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}
