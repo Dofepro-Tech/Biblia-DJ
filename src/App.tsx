@@ -1002,6 +1002,7 @@ export default function App() {
 
         {mainView === 'home' ? (
           <HomeScreen
+            isNativeApp={isNativePlatform}
             books={books}
             selectedBook={selectedBook}
             selectedChapter={selectedChapter}

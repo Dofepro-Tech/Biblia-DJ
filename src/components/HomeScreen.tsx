@@ -38,6 +38,7 @@ function readStoredSavedDailyImages() {
 type DailyCompanionKind = DailyContentKind;
 
 interface HomeScreenProps {
+  isNativeApp: boolean;
   books: Book[];
   selectedBook: Book | null;
   selectedChapter: number;
@@ -89,7 +90,7 @@ interface HomeScreenProps {
 
 export function HomeScreen(props: HomeScreenProps) {
   const {
-    books, selectedBook, selectedChapter, bookmarksCount, bookmarks, challengeSummary, isDarkMode,
+    isNativeApp, books, selectedBook, selectedChapter, bookmarksCount, bookmarks, challengeSummary, isDarkMode,
     onToggleDarkMode, fontSize, setFontSize, accentColor, setAccentColor, voiceURI, setVoiceURI,
     keepScreenOn, setKeepScreenOn, startupPage, setStartupPage, homeSections, setHomeSections,
     onShare, onMenuClick, onOpenBooks, onOpenBookPicker, onContinueReading, onOpenReaderSelector, onOpenStudy,
@@ -429,7 +430,7 @@ export function HomeScreen(props: HomeScreenProps) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={onOpenDownloadModal} className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--primary)]/35 bg-[var(--primary)]/15 text-[var(--primary)]" title="Descargar APK" aria-label="Descargar APK"><Download className="h-5 w-5" /></button>
+            {!isNativeApp && <button onClick={onOpenDownloadModal} className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--primary)]/35 bg-[var(--primary)]/15 text-[var(--primary)]" title="Descargar APK" aria-label="Descargar APK"><Download className="h-5 w-5" /></button>}
             <button onClick={() => setIsHelpModalOpen(true)} className="help-action flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white"><HelpCircle className="h-5 w-5 text-sky-400" /></button>
           </div>
         </header>
@@ -523,14 +524,16 @@ export function HomeScreen(props: HomeScreenProps) {
                 <span>Iniciar Sesión</span>
               </button>
 
-              <button
-                type="button"
-                onClick={onOpenDownloadModal}
-                className="inline-flex items-center gap-2 rounded-full border border-[var(--primary)]/35 bg-[var(--primary)]/12 px-3 py-2 text-xs font-bold text-[var(--primary)] transition-all hover:-translate-y-0.5 hover:bg-[var(--primary)]/20"
-              >
-                <Download className="h-4 w-4" />
-                <span>Descargar APK</span>
-              </button>
+              {!isNativeApp && (
+                <button
+                  type="button"
+                  onClick={onOpenDownloadModal}
+                  className="inline-flex items-center gap-2 rounded-full border border-[var(--primary)]/35 bg-[var(--primary)]/12 px-3 py-2 text-xs font-bold text-[var(--primary)] transition-all hover:-translate-y-0.5 hover:bg-[var(--primary)]/20"
+                >
+                  <Download className="h-4 w-4" />
+                  <span>Descargar APK</span>
+                </button>
+              )}
 
               <div className="flex items-center gap-1 ml-2">
                 <button
