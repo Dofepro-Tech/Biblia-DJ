@@ -17,8 +17,8 @@ function chooseFallbackCards(cards: DailyResourceCard[], seed: string, dateKey: 
 }
 
 function chooseSectionCards(remoteCards: DailyResourceCard[] | undefined, fallbackCards: DailyResourceCard[], seed: string, dateKey: string) {
-  // Live RSS cards arrive newest-first; keep that ordering and never mix them with generated search cards.
-  return remoteCards?.length ? remoteCards.slice(0, SECTION_LIMIT) : chooseFallbackCards(fallbackCards, seed, dateKey);
+  if (remoteCards !== undefined) return remoteCards.slice(0, SECTION_LIMIT);
+  return chooseFallbackCards(fallbackCards, seed, dateKey);
 }
 
 function applyVisualDefaults(cards: DailyResourceCard[], fallbackCards: DailyResourceCard[]) {

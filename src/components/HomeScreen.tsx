@@ -249,8 +249,8 @@ export function HomeScreen(props: HomeScreenProps) {
   };
 
   const mobileCopy = currentLanguage === 'en'
-    ? { devotional: 'Today\'s devotion', listen: 'Listen', read: 'Read', passage: 'Passage of the day', prayer: 'Prayer of the day', images: 'Images of the day', sermons: 'Sermons of the day', news: 'Recent news', videos: 'Recent videos', reflections: 'Reflections of the day', testimonies: 'Faith stories', versesSection: 'Verse of the day', minRead: '4 min' }
-    : { devotional: 'Devocional de hoy', listen: 'Escuchar', read: 'Leer', passage: 'Pasaje del día', prayer: 'Oración del día', images: 'Imágenes del día', sermons: 'Prédicas del día', news: 'Noticias recientes', videos: 'Videos recientes', reflections: 'Reflexiones del día', testimonies: 'Historias de fe', versesSection: 'Versículo del día', minRead: '4 min' };
+    ? { devotional: 'Today\'s devotion', listen: 'Listen', read: 'Read', passage: 'Passage of the day', prayer: 'Prayer of the day', images: 'Visual inspiration', sermons: 'Recent sermons', news: 'Recent news', videos: 'Recent videos', reflections: 'Recent reflections', testimonies: 'Faith stories', versesSection: 'Verse of the day', minRead: '4 min' }
+    : { devotional: 'Devocional de hoy', listen: 'Escuchar', read: 'Leer', passage: 'Pasaje del día', prayer: 'Oración del día', images: 'Inspiración visual', sermons: 'Prédicas recientes', news: 'Noticias recientes', videos: 'Videos recientes', reflections: 'Reflexiones recientes', testimonies: 'Historias de fe', versesSection: 'Versículo del día', minRead: '4 min' };
 
   const devotionalItems = [
     { id: 'reflection' as const, icon: <Quote className="h-4 w-4" />, title: t('app.reflection_of_day'), reference: dailyContent.reflection.verseReference ? dailyContent.reflection.verseReference[currentLanguage === 'en' ? 'labelEn' : 'labelEs'] : dailyVerse?.label ?? '', detail: mobileCopy.minRead, body: dailyContent.reflection.body, primaryLabel: mobileCopy.listen, primaryAction: handleReflectionListen, secondaryLabel: mobileCopy.read, secondaryAction: () => { void handleCompanionAction('reflection', dailyContent.reflection); } },
@@ -373,7 +373,7 @@ export function HomeScreen(props: HomeScreenProps) {
     <button onClick={onClick} className={cn("px-4 py-2 rounded-xl text-sm font-bold tracking-wide transition-all", isDarkMode ? "text-white/60 hover:text-[var(--primary)] hover:bg-[var(--primary)]/10" : "text-[#102542]/60 hover:text-[var(--primary)] hover:bg-[#102542]/5", active && "text-[var(--primary)]")}>{label}</button>
   );
 
-  const companionSections = dailyContent.sections.map(s => ({ ...s, title: getDailyCompanionSectionTitle(s.kind, mobileCopy), label: getDailyCompanionLabel(s.kind, t) }));
+  const companionSections = dailyContent.sections.filter(s => s.items.length > 0).map(s => ({ ...s, title: getDailyCompanionSectionTitle(s.kind, mobileCopy), label: getDailyCompanionLabel(s.kind, t) }));
 
   const renderCompanionCard = (kind: DailyCompanionKind, label: string, resource: DailyResourceCard, compact = false) => {
     if (kind === 'image') return <DailyImageCard key={resource.id} label={label} resource={resource} currentLanguage={currentLanguage} isDarkMode={isDarkMode} isSaved={savedDailyImageIds.includes(resource.id)} onToggleSaved={() => setSavedDailyImageIds(curr => curr.includes(resource.id) ? curr.filter(id => id !== resource.id) : [resource.id, ...curr])} onOpenImage={() => { void handleImagePreview(resource); }} onOpenVerse={() => resource.verseReference && onOpenVerse(resource.verseReference.bookAbrev, resource.verseReference.chapter, resource.verseReference.verseNumber)} onShare={() => { void handleImagePreview(resource); }} compact={compact} />;

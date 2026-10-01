@@ -63,6 +63,13 @@ interface RemoteCardCandidate extends Omit<RemoteDailyResourceCard, 'publishedAt
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const SECTION_LIMIT = 16;
 const FEED_TIMEOUT_MS = 8000;
+const MAX_ITEM_AGE_MS: Record<RemoteSectionKey, number> = {
+  reflections: 30 * 24 * 60 * 60 * 1000,
+  sermons: 45 * 24 * 60 * 60 * 1000,
+  newsItems: 14 * 24 * 60 * 60 * 1000,
+  videos: 14 * 24 * 60 * 60 * 1000,
+  testimonies: 45 * 24 * 60 * 60 * 1000,
+};
 
 const parser = new Parser<Record<string, never>, RemoteFeedItem>();
 const dailyContentCache = new Map<AppLanguage, { expiresAt: number; payload: RemoteDailyContentResponse }>();
@@ -262,7 +269,20 @@ const FEED_SOURCES: Record<RemoteSectionKey, Partial<Record<AppLanguage, FeedSou
     ],
   },
   testimonies: {
-    es: [],
+    es: [
+      {
+        id: 'testimonios-paco-palafox',
+        url: 'https://www.omnycontent.com/d/playlist/a586ab2b-f2d1-4bc7-abd8-affd00c083a1/0bb3fb25-f911-4984-8d82-b1c3013be8e5/9de40743-f778-40d6-8f1d-b1c3013d566b/podcast.rss',
+        accent: 'rose',
+        sourceName: { es: 'Buena Nueva · Testimonios con Paco Palafox', en: 'Buena Nueva · Testimonies with Paco Palafox' },
+        sourceLabel: { es: 'Escuchar testimonio', en: 'Listen to testimony' },
+        fallbackTitle: { es: 'Nuevo testimonio de fe', en: 'New faith testimony' },
+        fallbackBody: {
+          es: 'Una historia real compartida en el podcast Testimonios con Paco Palafox.',
+          en: 'A real story shared on the Testimonios con Paco Palafox podcast.',
+        },
+      },
+    ],
     en: [],
   },
 };
@@ -413,7 +433,8 @@ async function fetchSectionCards(language: AppLanguage, sectionKey: RemoteSectio
     }
   }));
 
-  return dedupeAndTrim(cards.flat(), SECTION_LIMIT);
+  const minimumPublishedAt = Date.now() - MAX_ITEM_AGE_MS[sectionKey];
+  return dedupeAndTrim(cards.flat().filter((card) => card.publishedAt >= minimumPublishedAt), SECTION_LIMIT);
 }
 
 async function buildRemoteDailyContent(language: AppLanguage): Promise<RemoteDailyContentResponse> {

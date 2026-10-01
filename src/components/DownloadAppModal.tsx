@@ -36,6 +36,11 @@ export function DownloadAppModal({ isOpen, onClose, isDarkMode }: DownloadAppMod
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--primary)]/12 text-[var(--primary)]"><Smartphone className="h-6 w-6" /></div>
             <h2 id="download-app-title" className="pr-8 text-xl font-bold">{isEnglish ? 'Get Biblia DJ' : 'Descarga Biblia DJ'}</h2>
             <p className={`mt-2 text-sm leading-6 ${supportingTone}`}>{isEnglish ? 'Install the Android app using the official APK.' : 'Instala la aplicación Android con el APK oficial.'}</p>
+            <p role="note" className={`mt-4 rounded-2xl border p-4 text-sm leading-6 ${isDarkMode ? 'border-amber-300/20 bg-amber-300/10 text-amber-100' : 'border-amber-300 bg-amber-50 text-amber-950'}`}>
+              {isEnglish
+                ? 'Android may show a security warning because this app is not available on the Play Store yet. If you downloaded the APK from the official Biblia DJ link, you can choose “Download and install anyway” to continue. Thank you for your support. God bless you.'
+                : 'Al descargar e instalar esta app, puede aparecer una advertencia de seguridad porque aún no está disponible en Play Store. Si descargaste el APK desde el enlace oficial de Biblia DJ, puedes elegir “Descargar e instalar de todos modos”. Muchas gracias por su apoyo. ¡Dios les bendiga!'}
+            </p>
             <a href={getAppApkUrl()} target="_blank" rel="noreferrer" onClick={() => { void trackEvent({ name: 'apk_download_click' }); }} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[var(--primary)] px-5 py-3 font-bold text-white transition hover:brightness-110">
               <Download className="h-5 w-5" />{isEnglish ? 'Download Android APK' : 'Descargar APK para Android'}
             </a>
