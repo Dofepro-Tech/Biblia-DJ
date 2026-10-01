@@ -18,6 +18,7 @@ export interface DailyResourceCard {
   sourceName?: string;
   sourceUrl?: string;
   sourceLabel?: string;
+  publishedAt?: string;
   verseReference?: DailyVerseReference;
   quote?: string;
   accent: 'gold' | 'blue' | 'emerald' | 'rose' | 'olive';
@@ -522,12 +523,12 @@ const TESTIMONIES: LocalizedDailyResourceCard[] = [
       es: 'Abre un testimonio real de cambio, perseverancia y encuentro con Dios para acompañar tu jornada.',
       en: 'Open a real testimony of change, perseverance, and encounter with God to accompany your day.',
     },
-    sourceName: { es: 'CBN', en: 'I Am Second' },
+    sourceName: { es: 'CBN Vida Dura', en: 'I Am Second' },
     sourceUrl: {
-      es: 'https://es.cbn.com/tags/testimonio',
+      es: 'https://cbn.com/spanish/vida-dura',
       en: 'https://www.iamsecond.com/films/',
     },
-    sourceLabel: { es: 'Abrir testimonios', en: 'Open testimonies' },
+    sourceLabel: { es: 'Ver historias reales', en: 'Open real stories' },
     accent: 'rose',
   },
   {

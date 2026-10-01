@@ -31,9 +31,9 @@
 }
 
 /* Color Themes */
-[data-theme='blue'] { --primary: #0879ed; --primary-rgb: 8, 121, 237; }
+[data-theme='blue'] { --primary: #0F52BA; --primary-rgb: 15, 82, 186; }
 [data-theme='green'] { --primary: #008f5b; --primary-rgb: 0, 143, 91; }
-[data-theme='red'] { --primary: #e11d3d; --primary-rgb: 225, 29, 61; }
+[data-theme='red'] { --primary: #8A0303; --primary-rgb: 138, 3, 3; }
 [data-theme='purple'] { --primary: #8b5cf6; --primary-rgb: 139, 92, 246; }
 [data-theme='olive'] { --primary: #5A5A40; --primary-rgb: 90, 90, 64; }
 [data-theme='violet'] { --primary: #4c1d95; --primary-rgb: 76, 29, 149; }

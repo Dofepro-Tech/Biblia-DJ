@@ -248,8 +248,8 @@ export function HomeScreen(props: HomeScreenProps) {
   };
 
   const mobileCopy = currentLanguage === 'en'
-    ? { devotional: 'Today\'s devotion', listen: 'Listen', read: 'Read', passage: 'Passage of the day', prayer: 'Prayer of the day', images: 'Images of the day', sermons: 'Sermons of the day', news: 'News of today', videos: 'Videos of the day', reflections: 'Reflections of the day', testimonies: 'Testimonies of the day', versesSection: 'Verse of the day', minRead: '4 min' }
-    : { devotional: 'Devocional de hoy', listen: 'Escuchar', read: 'Leer', passage: 'Pasaje del día', prayer: 'Oración del día', images: 'Imágenes del día', sermons: 'Prédicas del día', news: 'Noticias de hoy', videos: 'Videos del día', reflections: 'Reflexiones del día', testimonies: 'Testimonios de día', versesSection: 'Versículo del día', minRead: '4 min' };
+    ? { devotional: 'Today\'s devotion', listen: 'Listen', read: 'Read', passage: 'Passage of the day', prayer: 'Prayer of the day', images: 'Images of the day', sermons: 'Sermons of the day', news: 'Recent news', videos: 'Recent videos', reflections: 'Reflections of the day', testimonies: 'Faith stories', versesSection: 'Verse of the day', minRead: '4 min' }
+    : { devotional: 'Devocional de hoy', listen: 'Escuchar', read: 'Leer', passage: 'Pasaje del día', prayer: 'Oración del día', images: 'Imágenes del día', sermons: 'Prédicas del día', news: 'Noticias recientes', videos: 'Videos recientes', reflections: 'Reflexiones del día', testimonies: 'Historias de fe', versesSection: 'Versículo del día', minRead: '4 min' };
 
   const devotionalItems = [
     { id: 'reflection' as const, icon: <Quote className="h-4 w-4" />, title: t('app.reflection_of_day'), reference: dailyContent.reflection.verseReference ? dailyContent.reflection.verseReference[currentLanguage === 'en' ? 'labelEn' : 'labelEs'] : dailyVerse?.label ?? '', detail: mobileCopy.minRead, body: dailyContent.reflection.body, primaryLabel: mobileCopy.listen, primaryAction: handleReflectionListen, secondaryLabel: mobileCopy.read, secondaryAction: () => { void handleCompanionAction('reflection', dailyContent.reflection); } },
@@ -755,6 +755,9 @@ function getDailyCompanionTone(kind: DailyCompanionKind, isDarkMode: boolean) {
 }
 
 function DailyCompanionCard({ kind, label, resource, isDarkMode, onClick, compact = false }: { kind: DailyCompanionKind, label: string, resource: DailyResourceCard, isDarkMode: boolean, onClick: () => void, compact?: boolean }) {
+  const publishedLabel = resource.publishedAt && Number.isFinite(Date.parse(resource.publishedAt))
+    ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(resource.publishedAt))
+    : null;
   return (
     <button type="button" onClick={onClick} className={cn('group overflow-hidden rounded-[26px] border text-left transition-all', getDailyCompanionTone(kind, isDarkMode), compact ? 'w-[21.75rem] flex-shrink-0 p-3.5' : 'w-full p-4')}>
       <div className={cn('relative overflow-hidden rounded-[22px] aspect-[16/10] bg-black/20')}>
@@ -762,7 +765,7 @@ function DailyCompanionCard({ kind, label, resource, isDarkMode, onClick, compac
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 p-4"><h4 className="font-serif font-bold text-white leading-tight">{resource.title}</h4></div>
       </div>
-      <div className="mt-4"><p className="text-sm line-clamp-2 opacity-80">{resource.body}</p></div>
+      <div className="mt-4"><p className="text-sm line-clamp-2 opacity-80">{resource.body}</p><p className="mt-2 text-xs opacity-60">{resource.sourceName}{publishedLabel ? ` · ${publishedLabel}` : ''}</p></div>
     </button>
   );
 }

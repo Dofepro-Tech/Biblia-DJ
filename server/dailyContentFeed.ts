@@ -30,6 +30,7 @@ interface RemoteDailyResourceCard {
   sourceName?: string;
   sourceUrl?: string;
   sourceLabel?: string;
+  publishedAt?: string;
   accent: AccentTone;
 }
 
@@ -52,7 +53,7 @@ interface FeedSource {
   fallbackBody: { es: string; en: string };
 }
 
-interface RemoteCardCandidate extends RemoteDailyResourceCard {
+interface RemoteCardCandidate extends Omit<RemoteDailyResourceCard, 'publishedAt'> {
   publishedAt: number;
 }
 
@@ -281,46 +282,8 @@ const FEED_SOURCES: Record<RemoteSectionKey, Partial<Record<AppLanguage, FeedSou
     ],
   },
   testimonies: {
-    es: [
-      {
-        id: 'aleteia-es-testimony',
-        url: 'https://es.aleteia.org/feed/',
-        accent: 'rose',
-        sourceName: { es: 'Aleteia', en: 'Aleteia' },
-        sourceLabel: { es: 'Abrir historia', en: 'Open story' },
-        fallbackTitle: { es: 'Nuevo testimonio disponible', en: 'Fresh testimony available' },
-        fallbackBody: {
-          es: 'Se encontro una historia reciente para fortalecer la fe en el dia a dia.',
-          en: 'A recent story was found to strengthen faith in everyday life.',
-        },
-      },
-      {
-        id: 'guideposts-stories',
-        url: 'https://guideposts.org/feed/',
-        accent: 'rose',
-        sourceName: { es: 'Guideposts', en: 'Guideposts' },
-        sourceLabel: { es: 'Abrir historia', en: 'Open story' },
-        fallbackTitle: { es: 'Nuevo testimonio disponible', en: 'Fresh testimony available' },
-        fallbackBody: {
-          es: 'Se encontro una historia reciente de fe y restauracion.',
-          en: 'A recent story of faith and restoration was found.',
-        },
-      },
-    ],
-    en: [
-      {
-        id: 'guideposts-stories',
-        url: 'https://guideposts.org/feed/',
-        accent: 'rose',
-        sourceName: { es: 'Guideposts', en: 'Guideposts' },
-        sourceLabel: { es: 'Abrir historia', en: 'Open story' },
-        fallbackTitle: { es: 'Nuevo testimonio disponible', en: 'Fresh testimony available' },
-        fallbackBody: {
-          es: 'Se encontro una historia reciente de fe y restauracion.',
-          en: 'A recent story of faith and restoration was found.',
-        },
-      },
-    ],
+    es: [],
+    en: [],
   },
 };
 
@@ -441,7 +404,10 @@ function dedupeAndTrim(cards: RemoteCardCandidate[], limit: number) {
       return true;
     })
     .slice(0, limit)
-    .map(({ publishedAt: _publishedAt, ...card }) => card);
+    .map(({ publishedAt, ...card }) => ({
+      ...card,
+      publishedAt: publishedAt > 0 ? new Date(publishedAt).toISOString() : undefined,
+    }));
 }
 
 async function fetchSectionCards(language: AppLanguage, sectionKey: RemoteSectionKey) {
