@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import Parser from 'rss-parser';
 
 type AppLanguage = 'es' | 'en';
@@ -17,6 +18,7 @@ interface RemoteFeedItem {
   author?: string;
   enclosure?: {
     url?: string;
+    type?: string;
   };
   'content:encoded'?: string;
 }
@@ -46,6 +48,7 @@ export interface RemoteDailyContentResponse {
 interface FeedSource {
   id: string;
   url: string;
+  imageUrl?: string;
   accent: AccentTone;
   sourceName: { es: string; en: string };
   sourceLabel: { es: string; en: string };
@@ -122,39 +125,16 @@ const FEED_SOURCES: Record<RemoteSectionKey, Partial<Record<AppLanguage, FeedSou
   sermons: {
     es: [
       {
-        id: 'desiring-god-youtube',
-        url: 'https://www.youtube.com/feeds/videos.xml?user=desiringGod',
+        id: 'gracia-a-vosotros-podcast',
+        url: 'https://www.oneplace.com/ministries/gracia-a-vosotros/subscribe/podcast.xml',
+        imageUrl: 'https://content.swncdn.com/zcast/oneplace/host-images/gracia-a-vosotros/1400x1400.jpg',
         accent: 'emerald',
-        sourceName: { es: 'Desiring God', en: 'Desiring God' },
+        sourceName: { es: 'Gracia a Vosotros', en: 'Grace to You en Español' },
         sourceLabel: { es: 'Abrir predica', en: 'Open sermon' },
         fallbackTitle: { es: 'Nueva predica disponible', en: 'New sermon available' },
         fallbackBody: {
-          es: 'Se encontro una ensenanza reciente para escuchar o leer hoy.',
+          es: 'Una nueva ensenanza biblica en espanol esta disponible para escuchar hoy.',
           en: 'A recent teaching is available to read or listen to today.',
-        },
-      },
-      {
-        id: 'lifechurch-youtube',
-        url: 'https://www.youtube.com/feeds/videos.xml?user=LifeChurchTV',
-        accent: 'blue',
-        sourceName: { es: 'Life.Church', en: 'Life.Church' },
-        sourceLabel: { es: 'Abrir predica', en: 'Open sermon' },
-        fallbackTitle: { es: 'Nueva predica disponible', en: 'New sermon available' },
-        fallbackBody: {
-          es: 'Hay una predica reciente lista para acompanar la lectura de hoy.',
-          en: 'A recent sermon is ready to accompany today\'s reading.',
-        },
-      },
-      {
-        id: 'tony-evans-youtube',
-        url: 'https://www.youtube.com/feeds/videos.xml?user=drtonyevans',
-        accent: 'gold',
-        sourceName: { es: 'Tony Evans', en: 'Tony Evans' },
-        sourceLabel: { es: 'Abrir predica', en: 'Open sermon' },
-        fallbackTitle: { es: 'Nueva predica disponible', en: 'New sermon available' },
-        fallbackBody: {
-          es: 'Se encontro un nuevo mensaje para reforzar la aplicacion biblica del dia.',
-          en: 'A new message was found to deepen the day\'s biblical application.',
         },
       },
     ],
@@ -322,11 +302,14 @@ function truncateText(input: string, maxLength: number) {
 }
 
 function sanitizeId(input: string) {
-  return input
+  const prefix = input
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-    .slice(0, 80);
+    .slice(0, 60)
+    .replace(/-+$/g, '');
+  const suffix = createHash('sha256').update(input).digest('hex').slice(0, 12);
+  return `${prefix}-${suffix}`;
 }
 
 function extractFirstImageUrl(input?: string) {
@@ -362,7 +345,7 @@ async function fetchFeedItems(source: FeedSource) {
   return parsed.items ?? [];
 }
 
-function buildRemoteCard(language: AppLanguage, source: FeedSource, item: RemoteFeedItem): RemoteCardCandidate | null {
+function buildRemoteCard(language: AppLanguage, source: FeedSource, item: RemoteFeedItem, sectionKey: RemoteSectionKey): RemoteCardCandidate | null {
   const sourceUrl = item.link?.trim();
   if (!sourceUrl) {
     return null;
@@ -374,12 +357,14 @@ function buildRemoteCard(language: AppLanguage, source: FeedSource, item: Remote
     ? Date.parse(item.isoDate || item.pubDate || '')
     : 0;
   const imageUrl = item.enclosure?.url || extractFirstImageUrl(item['content:encoded']) || extractFirstImageUrl(item.content) || extractFirstImageUrl(item.summary);
+  const enclosureIsImage = item.enclosure?.type?.startsWith('image/')
+    || Boolean(item.enclosure?.url && /\.(?:jpg|jpeg|png|webp)(?:[?#]|$)/i.test(item.enclosure.url));
 
   return {
     id: sanitizeId(`${source.id}-${item.guid || sourceUrl || itemTitle}`) || `${source.id}-${publishedAt}`,
     title: truncateText(itemTitle || source.fallbackTitle[language], 96),
-    body: truncateText(snippet || source.fallbackBody[language], 180),
-    imageUrl,
+    body: truncateText(language === 'es' && sectionKey === 'sermons' ? source.fallbackBody.es : snippet || source.fallbackBody[language], 180),
+    imageUrl: source.imageUrl || (enclosureIsImage ? imageUrl : undefined) || extractFirstImageUrl(item['content:encoded']) || extractFirstImageUrl(item.content) || extractFirstImageUrl(item.summary),
     imageAlt: itemTitle || source.fallbackTitle[language],
     sourceName: source.sourceName[language],
     sourceUrl,
@@ -420,7 +405,7 @@ async function fetchSectionCards(language: AppLanguage, sectionKey: RemoteSectio
     try {
       const items = await fetchFeedItems(source);
       return items
-        .map((item) => buildRemoteCard(language, source, item))
+        .map((item) => buildRemoteCard(language, source, item, sectionKey))
         .filter((card): card is RemoteCardCandidate => Boolean(card));
     } catch (error) {
       console.error(`Daily content feed error for ${sectionKey}/${source.id}:`, error);

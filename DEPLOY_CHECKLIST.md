@@ -61,7 +61,7 @@ OPINIONS_SUPABASE_SECRET_KEY=CLAVE_PRIVADA_SOLO_DEL_BACKEND
 - En Google agrega como origen autorizado el dominio de Cloud Run y `http://localhost:3000` para desarrollo.
 - Como URI de redirección autorizada de Google agrega el callback que muestra Supabase: `https://<proyecto-portafolio-db>.supabase.co/auth/v1/callback`.
 - En `portafolio-db` abre Authentication > Sign In / Providers > Google y guarda allí el Client ID y Client Secret de Google.
-- En Authentication > URL Configuration agrega `https://<dominio-cloud-run>/**`, `http://localhost:3000/**` y `com.dofepro.biblianj://auth/callback` a Redirect URLs.
+- En Authentication > URL Configuration agrega `https://bibliadj.dofepro.do/**`, `https://<dominio-cloud-run>/**`, `http://localhost:3000/**` y `com.dofepro.biblianj://auth/callback` a Redirect URLs.
 - No pongas el Client Secret de Google en el frontend, Android, Git ni variables `VITE_*`.
 
 ## 4. App móvil

@@ -53,6 +53,10 @@ export function signOutFromAuth(accessToken: string) {
   return authRequest<{ message?: string }>('signout', { accessToken });
 }
 
+export function updateAuthProfile(accessToken: string, displayName: string) {
+  return authRequest<AuthUser>('profile', { accessToken, displayName });
+}
+
 export function createPkceVerifier() {
   const bytes = crypto.getRandomValues(new Uint8Array(48));
   return Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');

@@ -108,7 +108,7 @@ export default function App() {
   const [pendingStartupVerse, setPendingStartupVerse] = useState<{ bookAbrev: string; chapter: number; verseNumber: number } | null>(null);
   const [mainView, setMainView] = useState<MainView>(() => {
     if (typeof window === 'undefined') return 'home';
-    if (new URLSearchParams(window.location.search).get('auth') === 'callback') return 'profile';
+    if (['callback', 'confirmed'].includes(new URLSearchParams(window.location.search).get('auth') ?? '')) return 'profile';
     return localStorage.getItem('bible_startup_page') === 'reader' ? 'reader' : 'home';
   });
   const [viewHistory, setViewHistory] = useState<MainView[]>([]);

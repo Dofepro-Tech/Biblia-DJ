@@ -45,12 +45,14 @@ const explicitAllowedOrigins = (process.env.ALLOWED_ORIGINS || '')
   .split(',')
   .map((origin) => origin.trim())
   .filter(Boolean);
+const supabaseEmailRedirectUrl = (process.env.SUPABASE_EMAIL_REDIRECT_URL || 'https://bibliadj.dofepro.do/?auth=confirmed').trim();
 const allowedOrigins = new Set([
   'http://localhost',
   'http://localhost:3000',
   'http://127.0.0.1',
   'http://127.0.0.1:3000',
   'https://localhost',
+  'https://bibliadj.dofepro.do',
   'capacitor://localhost',
   'ionic://localhost',
   process.env.APP_URL || '',
@@ -684,14 +686,16 @@ app.post('/api/auth/exchange', (request, response) => {
   return proxySupabaseAuth(response, 'token?grant_type=pkce', { auth_code: code, code_verifier: codeVerifier });
 });
 
-async function proxySupabaseAuth(response: Response, endpoint: string, body: Record<string, unknown>, accessToken?: string) {
+async function proxySupabaseAuth(response: Response, endpoint: string, body: Record<string, unknown>, accessToken?: string, method = 'POST', query?: Record<string, string>) {
   if (!supabaseAuthUrl || !supabaseAnonKey) {
     return sendError(response, 503, 'El acceso con cuentas no está configurado en el servidor.');
   }
 
   try {
-    const upstream = await fetch(`${supabaseAuthUrl}/auth/v1/${endpoint}`, {
-      method: 'POST',
+    const upstreamUrl = new URL(`${supabaseAuthUrl}/auth/v1/${endpoint}`);
+    Object.entries(query ?? {}).forEach(([key, value]) => upstreamUrl.searchParams.set(key, value));
+    const upstream = await fetch(upstreamUrl, {
+      method,
       headers: {
         apikey: supabaseAnonKey,
         'Content-Type': 'application/json',
@@ -730,12 +734,15 @@ app.post('/api/auth/signup', (request, response) => {
   if (typeof email !== 'string' || typeof password !== 'string' || !email.trim() || password.length < 8) {
     return sendError(response, 400, 'Introduce un correo válido y una contraseña de al menos 8 caracteres.');
   }
+  if (!isAllowedAuthRedirect(supabaseEmailRedirectUrl)) {
+    return sendError(response, 503, 'La dirección de confirmación de cuenta no está configurada correctamente.');
+  }
 
   return proxySupabaseAuth(response, 'signup', {
     email: email.trim(),
     password,
     data: { display_name: typeof displayName === 'string' ? displayName.trim().slice(0, 80) : '' },
-  });
+  }, undefined, 'POST', { redirect_to: supabaseEmailRedirectUrl });
 });
 
 app.post('/api/auth/signin', (request, response) => {
@@ -770,6 +777,17 @@ app.post('/api/auth/signout', (request, response) => {
     return sendError(response, 400, 'La sesión ya no es válida.');
   }
   return proxySupabaseAuth(response, 'logout', {}, accessToken);
+});
+
+app.post('/api/auth/profile', (request, response) => {
+  const { accessToken, displayName } = request.body as { accessToken?: unknown; displayName?: unknown };
+  if (typeof accessToken !== 'string' || !accessToken || typeof displayName !== 'string' || !displayName.trim()) {
+    return sendError(response, 400, 'Introduce un nombre para el perfil y una sesión válida.');
+  }
+
+  return proxySupabaseAuth(response, 'user', {
+    data: { display_name: displayName.trim().slice(0, 80) },
+  }, accessToken, 'PUT');
 });
 const opinionsSupabaseUrl = process.env.OPINIONS_SUPABASE_URL;
 const opinionsSupabaseKey = process.env.OPINIONS_SUPABASE_SECRET_KEY || process.env.OPINIONS_SUPABASE_SERVICE_ROLE_KEY;

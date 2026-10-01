@@ -9,7 +9,7 @@ import { MobileBottomNav, MobilePageFooter } from '@/src/components/MobileBottom
 import { type AboutLegalType } from '@/src/components/AboutLegalModal';
 import { cn } from '@/src/lib/utils';
 import { useTranslation } from 'react-i18next';
-import { createPkceChallenge, createPkceVerifier, exchangeGoogleAuthorizationCode, getGoogleAuthorizationUrl, refreshAuthSession, sendPasswordReset, signInWithEmail, signOutFromAuth, signUpWithEmail, type AuthTokens } from '@/src/services/authApi';
+import { createPkceChallenge, createPkceVerifier, exchangeGoogleAuthorizationCode, getGoogleAuthorizationUrl, refreshAuthSession, sendPasswordReset, signInWithEmail, signOutFromAuth, signUpWithEmail, updateAuthProfile, type AuthTokens } from '@/src/services/authApi';
 
 interface UserAccessHubProps {
   onGoBack: () => void;
@@ -75,7 +75,12 @@ export function UserAccessHub({ onGoBack, onGoHome, onOpenReader, onOpenSearch, 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [session, setSession] = useState<StoredSession | null>(() => readSession());
-  const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [profileName, setProfileName] = useState(() => readSession()?.name ?? '');
+  const [statusMessage, setStatusMessage] = useState<string | null>(() => (
+    typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('auth') === 'confirmed'
+      ? (currentLanguage === 'en' ? 'Your email is confirmed. You can sign in now.' : 'Tu correo está confirmado. Ya puedes iniciar sesión.')
+      : null
+  ));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
 
@@ -122,6 +127,10 @@ export function UserAccessHub({ onGoBack, onGoHome, onOpenReader, onOpenSearch, 
       window.localStorage.removeItem(STORAGE_KEY);
     }
   }, [session]);
+
+  useEffect(() => {
+    if (session) setProfileName(session.name);
+  }, [session?.name]);
 
   useEffect(() => {
     if (!session?.refreshToken) return;
@@ -279,6 +288,29 @@ export function UserAccessHub({ onGoBack, onGoHome, onOpenReader, onOpenSearch, 
       setIsSubmitting(false);
     }
   };
+
+  const handleSaveProfile = async () => {
+    if (!session) return;
+    const displayName = profileName.trim();
+    if (!displayName) {
+      setStatusMessage(currentLanguage === 'en' ? 'Enter a display name.' : 'Escribe un nombre para mostrar.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setStatusMessage(null);
+    try {
+      const user = await updateAuthProfile(session.accessToken, displayName);
+      const savedName = user.user_metadata?.display_name;
+      setSession({ ...session, name: typeof savedName === 'string' && savedName.trim() ? savedName.trim() : displayName });
+      setStatusMessage(currentLanguage === 'en' ? 'Profile updated.' : 'Perfil actualizado.');
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : (currentLanguage === 'en' ? 'Could not save the profile.' : 'No se pudo guardar el perfil.'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="flex h-full flex-col bg-[#06090f] text-white">
       <header className="border-b border-white/10 bg-[#050b14]/96 px-4 py-4 backdrop-blur-xl">
@@ -414,11 +446,11 @@ export function UserAccessHub({ onGoBack, onGoHome, onOpenReader, onOpenSearch, 
                     <span className="mb-2 flex items-center gap-2 px-1 text-[10px] font-bold uppercase tracking-widest text-[#8dc3ff]/60">
                       <PencilLine className="h-3 w-3" /> {copy.name}
                     </span>
-                    <input value={session.name} onChange={(event) => setSession({ ...session, name: event.target.value })} className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3.5 text-sm text-white outline-none focus:border-[var(--primary)]/40 transition-all" />
+                    <input value={profileName} onChange={(event) => setProfileName(event.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3.5 text-sm text-white outline-none focus:border-[var(--primary)]/40 transition-all" />
                   </div>
 
                   <div className="flex flex-col gap-3">
-                    <button type="button" onClick={() => setStatusMessage(currentLanguage === 'en' ? 'Profile updated.' : 'Perfil actualizado.')} className="w-full rounded-full bg-[var(--primary)] py-4 text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-lg shadow-blue-900/20 active:scale-95 transition-all">
+                    <button type="button" onClick={() => void handleSaveProfile()} disabled={isSubmitting} className="w-full rounded-full bg-[var(--primary)] py-4 text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-lg shadow-blue-900/20 active:scale-95 transition-all disabled:cursor-wait disabled:opacity-70">
                       {copy.saveName}
                     </button>
                     <button type="button" onClick={() => void handleSignOut()} disabled={isSubmitting} className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/10 bg-white/[0.04] py-3.5 text-[10px] font-bold uppercase tracking-[0.18em] text-white/60 hover:text-white hover:bg-white/[0.08] transition-all">
