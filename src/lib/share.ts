@@ -38,18 +38,6 @@ function normalizeShareField(value: string | undefined) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
-function isInternalAppUrl(value: string) {
-  try {
-    const parsedUrl = new URL(value);
-    return parsedUrl.protocol === 'capacitor:'
-      || parsedUrl.protocol === 'file:'
-      || parsedUrl.hostname === 'localhost'
-      || parsedUrl.hostname === '127.0.0.1';
-  } catch {
-    return false;
-  }
-}
-
 export function getAppShareUrl() {
   const envUrl = import.meta.env.VITE_APP_SHARE_URL
     || import.meta.env.VITE_APP_DOWNLOAD_URL
@@ -59,11 +47,7 @@ export function getAppShareUrl() {
     return envUrl.trim();
   }
 
-  if (typeof window !== 'undefined' && window.location?.href && !isInternalAppUrl(window.location.href)) {
-    return window.location.href;
-  }
-
-  return 'https://dofepro-tech.github.io/biblia-dj/';
+  return 'https://bibliadj.dofepro.do/download.html';
 }
 
 export function getAppApkUrl() {
