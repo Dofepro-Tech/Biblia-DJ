@@ -7,6 +7,7 @@ import { useDailyContent } from '@/src/hooks/useDailyContent';
 import { normalizeAppLanguage } from '@/src/lib/language';
 import { buildVerseShareText, getAppShareUrl, getReaderShareUrl, type SharePayload } from '@/src/lib/share';
 import { canUseSpeechSynthesis, cancelSpeech, speakText } from '@/src/lib/speech';
+import { openExternalUrl } from '@/src/lib/openExternalUrl';
 import { cn } from '@/src/lib/utils';
 import { AppOverflowMenu } from '@/src/components/AppOverflowMenu';
 import { BrandSeal } from '@/src/components/BrandSeal';
@@ -232,8 +233,8 @@ export function HomeScreen(props: HomeScreenProps) {
       onOpenVerse(resource.verseReference.bookAbrev, resource.verseReference.chapter, resource.verseReference.verseNumber);
       return;
     }
-    if (kind === 'reflection') { onOpenDailyExperience(); return; }
-    if (kind === 'image' && resource.id) { setActiveImageResourceId(resource.id); return; }
+    if (kind === 'image') { void handleImagePreview(resource); return; }
+    if (resource.sourceUrl) { void openExternalUrl(resource.sourceUrl); return; }
     onOpenDailyExperience();
   };
 
