@@ -1,9 +1,9 @@
 {
   "version": "1.0.4",
   "channel": "stable",
-  "publishedAt": "2026-09-30T16:50:11.877Z",
-  "downloadUrl": "https://dofepro-tech.github.io/biblia-dj/",
-  "apkUrl": "https://dofepro-tech.github.io/biblia-dj/biblia-dj-android.apk",
-  "updateUrl": "https://dofepro-tech.github.io/biblia-dj/app-update.json",
+  "publishedAt": "2026-10-01T00:07:55.513Z",
+  "downloadUrl": "https://bibliadj.dofepro.do/download.html",
+  "apkUrl": "https://dofepro-tech.github.io/biblia-dj-android.apk",
+  "updateUrl": "https://bibliadj.dofepro.do/app-update.json",
   "notes": []
 }
