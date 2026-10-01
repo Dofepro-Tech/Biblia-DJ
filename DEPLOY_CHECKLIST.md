@@ -72,7 +72,9 @@ OPINIONS_SUPABASE_SECRET_KEY=CLAVE_PRIVADA_SOLO_DEL_BACKEND
 - Generar la build debug con `android\gradlew.bat assembleDebug`.
 - Generar la build release con `android\gradlew.bat assembleRelease`.
 - Si la build release debe quedar firmada, preparar `android/keystore.properties` a partir de `android/keystore.properties.example` y colocar el `.jks` real.
-- Hacer backup seguro del `.jks` y de `android/keystore.properties`; sin ellos no podrás publicar actualizaciones firmadas con la misma identidad.
+- Conservar `android/app/biblia-dj-release-2026.jks` y `android/keystore.properties` como identidad permanente de publicación; nunca regenerar el keystore para una actualización.
+- Mantener al menos dos copias cifradas del `.jks` y de `android/keystore.properties` en ubicaciones seguras. Ambos archivos están excluidos de Git; sin el `.jks`, alias y contraseñas no se podrán firmar futuras actualizaciones.
+- Las instalaciones firmadas con la clave anterior deben desinstalarse para instalar esta versión; los datos guardados únicamente en el teléfono se borrarán. El perfil autenticado permanece en Supabase.
 - Configurar la app móvil para consumir el backend público por HTTPS.
 - Antes de compilar Android contra Cloud Run, define `VITE_API_BASE_URL=https://<servicio-cloud-run>.run.app`.
 - Cloud Run actualiza la web y el backend, pero no el JavaScript que ya está dentro de la APK instalada. Para llevar cambios de interfaz a Android hay que subir una nueva APK firmada con la misma clave y publicarla en la URL estable de `VITE_APP_APK_URL`/`VITE_APP_UPDATE_URL`; la app consulta `app-update.json` y ofrece la actualización.
