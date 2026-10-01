@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { BookOpen, Calendar, ChevronLeft, Heart, House, Search, User, LogOut, PencilLine, LoaderCircle } from 'lucide-react';
+import { BookOpen, Calendar, ChevronLeft, Eye, EyeOff, Heart, House, Search, User, LogOut, PencilLine, LoaderCircle } from 'lucide-react';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Browser } from '@capacitor/browser';
 import { Capacitor } from '@capacitor/core';
@@ -9,7 +9,7 @@ import { MobileBottomNav, MobilePageFooter } from '@/src/components/MobileBottom
 import { type AboutLegalType } from '@/src/components/AboutLegalModal';
 import { cn } from '@/src/lib/utils';
 import { useTranslation } from 'react-i18next';
-import { createPkceChallenge, createPkceVerifier, exchangeGoogleAuthorizationCode, getGoogleAuthorizationUrl, refreshAuthSession, sendPasswordReset, signInWithEmail, signOutFromAuth, signUpWithEmail, updateAuthProfile, type AuthTokens } from '@/src/services/authApi';
+import { createPkceChallenge, createPkceVerifier, exchangeGoogleAuthorizationCode, getGoogleAuthorizationUrl, refreshAuthSession, resendSignupConfirmation, sendPasswordReset, signInWithEmail, signOutFromAuth, signUpWithEmail, updateAuthProfile, type AuthTokens } from '@/src/services/authApi';
 
 interface UserAccessHubProps {
   onGoBack: () => void;
@@ -74,6 +74,7 @@ export function UserAccessHub({ onGoBack, onGoHome, onOpenReader, onOpenSearch, 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [session, setSession] = useState<StoredSession | null>(() => readSession());
   const [profileName, setProfileName] = useState(() => readSession()?.name ?? '');
   const [statusMessage, setStatusMessage] = useState<string | null>(() => (
@@ -83,6 +84,7 @@ export function UserAccessHub({ onGoBack, onGoHome, onOpenReader, onOpenSearch, 
   ));
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isGoogleSubmitting, setIsGoogleSubmitting] = useState(false);
+  const [canResendConfirmation, setCanResendConfirmation] = useState(false);
 
   const copy = currentLanguage === 'en'
     ? {
@@ -99,6 +101,9 @@ export function UserAccessHub({ onGoBack, onGoHome, onOpenReader, onOpenSearch, 
         providerGoogle: 'Google account',
         saveName: 'Save profile',
         logout: 'Sign out',
+        showPassword: 'Show password',
+        hidePassword: 'Hide password',
+        resendConfirmation: 'Resend confirmation email',
       }
     : {
         title: 'Usuario',
@@ -114,6 +119,9 @@ export function UserAccessHub({ onGoBack, onGoHome, onOpenReader, onOpenSearch, 
         providerGoogle: 'Cuenta de Google',
         saveName: 'Guardar perfil',
         logout: 'Cerrar sesión',
+        showPassword: 'Mostrar contraseña',
+        hidePassword: 'Ocultar contraseña',
+        resendConfirmation: 'Reenviar correo de confirmación',
       };
 
   useEffect(() => {
@@ -218,6 +226,7 @@ export function UserAccessHub({ onGoBack, onGoHome, onOpenReader, onOpenSearch, 
 
     setIsSubmitting(true);
     setStatusMessage(null);
+    setCanResendConfirmation(false);
     try {
       if (mode === 'signup') {
         const result = await signUpWithEmail(email.trim(), password, name.trim());
@@ -225,6 +234,7 @@ export function UserAccessHub({ onGoBack, onGoHome, onOpenReader, onOpenSearch, 
           setSession(toStoredSession(result.session));
           setStatusMessage(currentLanguage === 'en' ? 'Your account is ready.' : 'Tu cuenta está lista.');
         } else {
+          setCanResendConfirmation(true);
           setStatusMessage(currentLanguage === 'en' ? 'Check your email to confirm your account, then sign in.' : 'Revisa tu correo para confirmar la cuenta y luego inicia sesión.');
         }
       } else {
@@ -233,7 +243,30 @@ export function UserAccessHub({ onGoBack, onGoHome, onOpenReader, onOpenSearch, 
         setStatusMessage(currentLanguage === 'en' ? 'You are signed in.' : 'Has iniciado sesión.');
       }
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : (currentLanguage === 'en' ? 'Authentication failed.' : 'No se pudo autenticar la cuenta.'));
+      const message = error instanceof Error ? error.message : (currentLanguage === 'en' ? 'Authentication failed.' : 'No se pudo autenticar la cuenta.');
+      if (/email[_ ]not[_ ]confirmed|email not confirmed/i.test(message)) setCanResendConfirmation(true);
+      setStatusMessage(message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) {
+      setStatusMessage(currentLanguage === 'en' ? 'Enter your account email first.' : 'Primero escribe el correo de tu cuenta.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setStatusMessage(null);
+    try {
+      await resendSignupConfirmation(normalizedEmail);
+      setStatusMessage(currentLanguage === 'en'
+        ? 'If the account needs confirmation, a new email has been sent. Check your inbox and spam folder.'
+        : 'Si la cuenta necesita confirmación, se envió un nuevo correo. Revisa la bandeja de entrada y el correo no deseado.');
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : (currentLanguage === 'en' ? 'Could not resend the confirmation email.' : 'No se pudo reenviar el correo de confirmación.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -355,11 +388,11 @@ export function UserAccessHub({ onGoBack, onGoHome, onOpenReader, onOpenSearch, 
 
             <div className="rounded-[32px] border border-white/10 bg-white/[0.03] p-1.5 backdrop-blur-md">
               <div className="grid grid-cols-2 gap-1">
-                <button type="button" onClick={() => { setMode('login'); setStatusMessage(null); }} className={cn('relative rounded-[24px] py-3.5 text-sm font-bold transition-all', mode === 'login' ? 'text-white' : 'text-white/50 hover:bg-white/5')}>
+                <button type="button" onClick={() => { setMode('login'); setStatusMessage(null); setCanResendConfirmation(false); setIsPasswordVisible(false); }} className={cn('relative rounded-[24px] py-3.5 text-sm font-bold transition-all', mode === 'login' ? 'text-white' : 'text-white/50 hover:bg-white/5')}>
                   {mode === 'login' && <motion.span layoutId="access-mode-highlight" className="absolute inset-0 rounded-[24px] bg-[var(--primary)] shadow-lg" transition={{ type: 'spring', stiffness: 420, damping: 32 }} />}
                   <span className="relative z-10">{copy.signIn}</span>
                 </button>
-                <button type="button" onClick={() => { setMode('signup'); setStatusMessage(null); }} className={cn('relative rounded-[24px] py-3.5 text-sm font-bold transition-all', mode === 'signup' ? 'text-white' : 'text-white/50 hover:bg-white/5')}>
+                <button type="button" onClick={() => { setMode('signup'); setStatusMessage(null); setCanResendConfirmation(false); setIsPasswordVisible(false); }} className={cn('relative rounded-[24px] py-3.5 text-sm font-bold transition-all', mode === 'signup' ? 'text-white' : 'text-white/50 hover:bg-white/5')}>
                   {mode === 'signup' && <motion.span layoutId="access-mode-highlight" className="absolute inset-0 rounded-[24px] bg-[var(--primary)] shadow-lg" transition={{ type: 'spring', stiffness: 420, damping: 32 }} />}
                   <span className="relative z-10">{copy.createAccount}</span>
                 </button>
@@ -384,7 +417,12 @@ export function UserAccessHub({ onGoBack, onGoHome, onOpenReader, onOpenSearch, 
               </div>
               <div>
                 <span className="mb-2 block px-1 text-[10px] font-bold uppercase tracking-widest text-[#8dc3ff]/60">{copy.password}</span>
-                <input type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={mode === 'signup' ? 8 : undefined} required value={password} onChange={(event) => setPassword(event.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3.5 text-sm text-white outline-none focus:border-[var(--primary)]/50 focus:bg-black/30 transition-all" placeholder="••••••••" />
+                <div className="relative">
+                  <input type={isPasswordVisible ? 'text' : 'password'} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={mode === 'signup' ? 8 : undefined} required value={password} onChange={(event) => setPassword(event.target.value)} className="w-full rounded-2xl border border-white/10 bg-black/20 px-4 py-3.5 pr-12 text-sm text-white outline-none focus:border-[var(--primary)]/50 focus:bg-black/30 transition-all" placeholder="••••••••" />
+                  <button type="button" onClick={() => setIsPasswordVisible((visible) => !visible)} className="absolute right-2 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-xl text-white/55 transition hover:bg-white/10 hover:text-white" aria-label={isPasswordVisible ? copy.hidePassword : copy.showPassword} title={isPasswordVisible ? copy.hidePassword : copy.showPassword}>
+                    {isPasswordVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
 
               <button type="submit" disabled={isSubmitting} className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-[var(--primary)] px-4 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-white shadow-lg transition-all hover:bg-[var(--primary-hover)] active:scale-95 disabled:cursor-wait disabled:opacity-70">
@@ -401,6 +439,12 @@ export function UserAccessHub({ onGoBack, onGoHome, onOpenReader, onOpenSearch, 
               <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mt-6 rounded-2xl border border-[var(--primary)]/20 bg-[var(--primary)]/10 px-4 py-3 text-center text-xs font-bold text-[#8dc3ff]">
                 {statusMessage}
               </motion.div>
+            )}
+            {canResendConfirmation && (
+              <button type="button" onClick={() => void handleResendConfirmation()} disabled={isSubmitting || !email.trim()} className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border border-white/15 px-4 py-3 text-xs font-bold text-[#8dc3ff] transition hover:bg-white/5 disabled:cursor-wait disabled:opacity-50">
+                {isSubmitting && <LoaderCircle className="h-4 w-4 animate-spin" />}
+                {copy.resendConfirmation}
+              </button>
             )}
           </div>
         ) : (

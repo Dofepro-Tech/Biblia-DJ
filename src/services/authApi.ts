@@ -33,12 +33,20 @@ async function authRequest<T>(path: string, body: Record<string, unknown>): Prom
   return payload as T;
 }
 
+function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
 export function signInWithEmail(email: string, password: string) {
-  return authRequest<AuthTokens>('signin', { email, password });
+  return authRequest<AuthTokens>('signin', { email: normalizeEmail(email), password });
 }
 
 export function signUpWithEmail(email: string, password: string, displayName: string) {
-  return authRequest<AuthSignUpResult>('signup', { email, password, displayName });
+  return authRequest<AuthSignUpResult>('signup', { email: normalizeEmail(email), password, displayName });
+}
+
+export function resendSignupConfirmation(email: string) {
+  return authRequest<{ message?: string }>('resend', { email: normalizeEmail(email) });
 }
 
 export function refreshAuthSession(refreshToken: string) {
@@ -46,7 +54,7 @@ export function refreshAuthSession(refreshToken: string) {
 }
 
 export function sendPasswordReset(email: string) {
-  return authRequest<{ message?: string }>('recover', { email });
+  return authRequest<{ message?: string }>('recover', { email: normalizeEmail(email) });
 }
 
 export function signOutFromAuth(accessToken: string) {

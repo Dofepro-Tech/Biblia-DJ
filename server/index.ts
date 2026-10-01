@@ -739,9 +739,24 @@ app.post('/api/auth/signup', (request, response) => {
   }
 
   return proxySupabaseAuth(response, 'signup', {
-    email: email.trim(),
+    email: email.trim().toLowerCase(),
     password,
     data: { display_name: typeof displayName === 'string' ? displayName.trim().slice(0, 80) : '' },
+  }, undefined, 'POST', { redirect_to: supabaseEmailRedirectUrl });
+});
+
+app.post('/api/auth/resend', (request, response) => {
+  const { email } = request.body as { email?: unknown };
+  if (typeof email !== 'string' || !email.trim()) {
+    return sendError(response, 400, 'Introduce el correo de la cuenta que quieres confirmar.');
+  }
+  if (!isAllowedAuthRedirect(supabaseEmailRedirectUrl)) {
+    return sendError(response, 503, 'La dirección de confirmación de cuenta no está configurada correctamente.');
+  }
+
+  return proxySupabaseAuth(response, 'resend', {
+    type: 'signup',
+    email: email.trim().toLowerCase(),
   }, undefined, 'POST', { redirect_to: supabaseEmailRedirectUrl });
 });
 
@@ -751,7 +766,7 @@ app.post('/api/auth/signin', (request, response) => {
     return sendError(response, 400, 'Introduce tu correo y contraseña.');
   }
 
-  return proxySupabaseAuth(response, 'token?grant_type=password', { email: email.trim(), password });
+  return proxySupabaseAuth(response, 'token?grant_type=password', { email: email.trim().toLowerCase(), password });
 });
 
 app.post('/api/auth/refresh', (request, response) => {
@@ -768,7 +783,7 @@ app.post('/api/auth/recover', (request, response) => {
   if (typeof email !== 'string' || !email.trim()) {
     return sendError(response, 400, 'Introduce el correo de tu cuenta.');
   }
-  return proxySupabaseAuth(response, 'recover', { email: email.trim() });
+  return proxySupabaseAuth(response, 'recover', { email: email.trim().toLowerCase() });
 });
 
 app.post('/api/auth/signout', (request, response) => {
