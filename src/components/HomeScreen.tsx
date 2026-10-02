@@ -668,7 +668,10 @@ export function HomeScreen(props: HomeScreenProps) {
                 if (section.kind === 'video' && !homeSections.videos) return null;
                 return (
                   <section key={section.id} ref={sectionRefs[section.kind] as any}>
-                    <div className="flex items-center justify-between gap-3 mb-4"><h3 className="text-xl font-bold text-white">{section.title}</h3><ChevronRight className="h-5 w-5 text-white/30" /></div>
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <h3 className={cn('text-xl font-bold', isDarkMode ? 'text-white' : 'text-[#102542]')}>{section.title}</h3>
+                      <ChevronRight className={cn('h-5 w-5', isDarkMode ? 'text-white/30' : 'text-slate-400')} />
+                    </div>
                     <div className="grid gap-4 sm:grid-cols-2">
                        {section.items.slice(0, 4).map(r => renderCompanionCard(section.kind, section.label, r, false))}
                     </div>
