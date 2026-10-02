@@ -1051,6 +1051,8 @@ export default function App() {
               version: availableAppUpdate.version,
               currentVersion: currentAppVersion,
               publishedAt: availableAppUpdate.publishedAt,
+              notes: availableAppUpdate.notes,
+              notesEn: availableAppUpdate.notesEn,
             } : null}
             onOpenAppUpdate={() => { void handleOpenAppUpdate(); }}
             onDismissAppUpdate={handleDismissAppUpdate}

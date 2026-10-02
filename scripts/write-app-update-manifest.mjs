@@ -25,6 +25,24 @@ const downloadUrl = (
 ).trim();
 const explicitUpdateUrl = (process.env.VITE_APP_UPDATE_URL || '').trim();
 const explicitApkUrl = (process.env.VITE_APP_APK_URL || '').trim();
+const publicDir = path.resolve(rootDir, 'public');
+const manifestPath = path.resolve(publicDir, 'app-update.json');
+let previousManifest = {};
+
+if (existsSync(manifestPath)) {
+  try {
+    previousManifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  } catch {
+    previousManifest = {};
+  }
+}
+
+const notes = previousManifest.version === version && Array.isArray(previousManifest.notes)
+  ? previousManifest.notes.filter((note) => typeof note === 'string' && note.trim().length > 0)
+  : [];
+const notesEn = previousManifest.version === version && Array.isArray(previousManifest.notesEn)
+  ? previousManifest.notesEn.filter((note) => typeof note === 'string' && note.trim().length > 0)
+  : [];
 
 const updateUrl = explicitUpdateUrl || (downloadUrl ? new URL('app-update.json', downloadUrl).toString() : '');
 const apkUrl = explicitApkUrl
@@ -37,11 +55,11 @@ const manifest = {
   downloadUrl,
   apkUrl,
   updateUrl,
-  notes: [],
+  notes,
+  notesEn,
 };
 
-const publicDir = path.resolve(rootDir, 'public');
 mkdirSync(publicDir, { recursive: true });
-writeFileSync(path.resolve(publicDir, 'app-update.json'), `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
+writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8');
 
 console.log(`Wrote app-update.json for version ${version}`);

@@ -83,7 +83,7 @@ interface HomeScreenProps {
   onAddBookmark: (bookAbrev: string, chapter: number, verseNumber?: number, label?: string) => void;
   onRemoveBookmark: (id: string) => void;
   onShareContent: (payload: SharePayload) => void | Promise<void>;
-  availableAppUpdate?: { version: string; currentVersion: string; publishedAt?: string; } | null;
+  availableAppUpdate?: { version: string; currentVersion: string; publishedAt?: string; notes?: string[]; notesEn?: string[]; } | null;
   onOpenAppUpdate?: () => void;
   onDismissAppUpdate?: () => void;
 }
@@ -296,6 +296,9 @@ export function HomeScreen(props: HomeScreenProps) {
   const renderAppUpdateNotice = (cls?: string) => {
     if (!availableAppUpdate || !onOpenAppUpdate) return null;
     const isEn = currentLanguage.startsWith('en');
+    const releaseNotes = isEn && availableAppUpdate.notesEn?.length
+      ? availableAppUpdate.notesEn
+      : availableAppUpdate.notes;
     return (
       <section className={cn('rounded-[26px] border border-[#f3c96f]/35 bg-[linear-gradient(135deg,_rgba(243,201,111,0.14),_rgba(7,21,37,0.94))] p-4 text-white shadow-[0_18px_44px_rgba(0,0,0,0.22)]', cls)}>
         <div className="flex items-start justify-between gap-3">
@@ -307,6 +310,11 @@ export function HomeScreen(props: HomeScreenProps) {
             <button onClick={onDismissAppUpdate} className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/6 text-white/72 transition-all hover:text-white"><X className="h-4 w-4" /></button>
           )}
         </div>
+        {releaseNotes && releaseNotes.length > 0 && (
+          <ul className="mt-3 list-disc space-y-1 pl-5 text-xs leading-5 text-white/80">
+            {releaseNotes.map((note) => <li key={note}>{note}</li>)}
+          </ul>
+        )}
         <button onClick={onOpenAppUpdate} className="mt-4 inline-flex items-center gap-2 rounded-full bg-[#f3c96f] px-5 py-3 text-[11px] font-bold uppercase text-[#13233d] transition-all hover:-translate-y-0.5">
           {isEn ? 'Download' : 'Descargar'} <ExternalLink className="h-4 w-4" />
         </button>
