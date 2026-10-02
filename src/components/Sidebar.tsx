@@ -277,6 +277,10 @@ export function Sidebar({
              </div>
           )}
         </div>
+        <div className={cn('shrink-0 border-t px-4 py-3 text-center', isDarkMode ? 'border-white/5 bg-black/10' : 'border-[#d8e4f2] bg-white/70')}>
+          <p className={cn('font-serif text-sm italic', isDarkMode ? 'text-white/65' : 'text-[#334155]')}>Haciéndolo de corazón, como para el Señor.</p>
+          <p className={cn('mt-1 text-[10px] font-bold uppercase tracking-widest', isDarkMode ? 'text-white/40' : 'text-[#64748b]')}>Colosenses 3:23</p>
+        </div>
       </motion.aside>
     </>
   );

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BookOpen, Calendar, ChevronLeft, ChevronRight, Heart, House, Search, User, X } from 'lucide-react';
+import { BookOpen, Calendar, ChevronLeft, ChevronRight, Heart, House, LoaderCircle, Search, User, X } from 'lucide-react';
 import { BrandSeal } from '@/src/components/BrandSeal';
 import { MobileBottomNav, MobilePageFooter } from '@/src/components/MobileBottomNav';
 import { searchBible } from '@/src/services/bibleApi';
@@ -8,6 +8,7 @@ import type { BibleSearchResult } from '@/src/types';
 import { type AboutLegalType } from '@/src/components/AboutLegalModal';
 import { cn } from '@/src/lib/utils';
 import { useTranslation } from 'react-i18next';
+import { getStrongReference, loadStrongLexicon, searchStrongEntries, type StrongLexiconData } from '@/src/lib/strongLexicon';
 
 interface SearchHubProps {
   initialQuery?: string;
@@ -47,7 +48,7 @@ export function SearchHub({ initialQuery, onGoBack, onGoHome, onOpenReader, onOp
   const { t, i18n } = useTranslation();
   const currentLanguage = normalizeAppLanguage(i18n.resolvedLanguage || i18n.language);
   const [activeTab, setActiveTab] = useState<SearchTab>('bible');
-  const [query, setQuery] = useState(initialQuery || '');
+  const [query, setQuery] = useState(typeof initialQuery === 'string' ? initialQuery : '');
   const [scope, setScope] = useState(currentLanguage === 'en' ? 'All' : 'Todo');
   const [results, setResults] = useState<BibleSearchResult[]>([]);
   const [totalResults, setTotalResults] = useState(0);
@@ -56,6 +57,9 @@ export function SearchHub({ initialQuery, onGoBack, onGoHome, onOpenReader, onOp
   const [currentPage, setCurrentPage] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [strongData, setStrongData] = useState<StrongLexiconData | null>(null);
+  const [isStrongLoading, setIsStrongLoading] = useState(false);
+  const [strongError, setStrongError] = useState<string | null>(null);
 
   const copy = currentLanguage === 'en'
     ? {
@@ -74,6 +78,11 @@ export function SearchHub({ initialQuery, onGoBack, onGoHome, onOpenReader, onOp
         emptyCategory: 'This category is not connected yet. Switch to Bible or All to search real verses.',
         loading: 'Searching across the Bible...',
         noResults: 'No matches found.',
+        strongPlaceholder: 'Strong number, lemma, or transliteration...',
+        strongIntro: 'Search 14,298 Hebrew and Greek Strong entries by number, lemma, or transliteration. Source definitions are in English. Interlinear references omit 1 Kings 22 and 3 John 15.',
+        strongLoading: 'Loading the Strong lexicon...',
+        strongError: 'The Strong lexicon could not be loaded. Check your connection and try again.',
+        strongVerses: 'verses with this Strong number',
         resultLabel: 'Results',
         previousPage: 'Previous results',
         nextPage: 'Next results',
@@ -94,6 +103,11 @@ export function SearchHub({ initialQuery, onGoBack, onGoHome, onOpenReader, onOp
         emptyCategory: 'Esta categoría todavía no está conectada. Cambia a Biblia o Todos para buscar versículos reales.',
         loading: 'Buscando en toda la Biblia...',
         noResults: 'No se encontraron coincidencias.',
+        strongPlaceholder: 'Número Strong, lema o transliteración...',
+        strongIntro: 'Consulta 14.298 entradas Strong hebreas y griegas por número, lema o transliteración. Las definiciones originales están en inglés. La fuente interlineal no incluye 1 Reyes 22 ni 3 Juan 15.',
+        strongLoading: 'Cargando el léxico Strong...',
+        strongError: 'No se pudo cargar el léxico Strong. Revisa tu conexión e inténtalo de nuevo.',
+        strongVerses: 'versículos con este número Strong',
         resultLabel: 'Resultados',
         previousPage: 'Resultados anteriores',
         nextPage: 'Resultados siguientes',
@@ -145,6 +159,25 @@ export function SearchHub({ initialQuery, onGoBack, onGoHome, onOpenReader, onOp
       window.clearTimeout(timer);
     };
   }, [activeTab, copy.noResults, currentLanguage, currentPage, query]);
+
+  useEffect(() => {
+    if (activeTab !== 'strong' || strongData) return undefined;
+
+    let isCancelled = false;
+    setIsStrongLoading(true);
+    setStrongError(null);
+    void loadStrongLexicon()
+      .then((data) => { if (!isCancelled) setStrongData(data); })
+      .catch(() => { if (!isCancelled) setStrongError(copy.strongError); })
+      .finally(() => { if (!isCancelled) setIsStrongLoading(false); });
+
+    return () => { isCancelled = true; };
+  }, [activeTab, copy.strongError, strongData]);
+
+  const strongMatches = useMemo(
+    () => strongData ? searchStrongEntries(strongData.entries, query, SEARCH_PAGE_SIZE) : [],
+    [query, strongData],
+  );
 
   const resultRangeStart = totalResults === 0 ? 0 : currentPage * SEARCH_PAGE_SIZE + 1;
   const resultRangeEnd = Math.min((currentPage + 1) * SEARCH_PAGE_SIZE, totalResults);
@@ -217,7 +250,7 @@ export function SearchHub({ initialQuery, onGoBack, onGoHome, onOpenReader, onOp
             type="text"
             value={query}
             onChange={(event) => { setQuery(event.target.value); setCurrentPage(0); setTotalResults(0); setResults([]); setResultVersion(null); }}
-            placeholder={copy.placeholder}
+            placeholder={activeTab === 'strong' ? copy.strongPlaceholder : copy.placeholder}
             className="w-full rounded-2xl border border-white/12 bg-white/[0.04] py-3 pl-11 pr-11 text-sm text-white outline-none placeholder:text-white/38"
           />
           {query ? (
@@ -242,7 +275,54 @@ export function SearchHub({ initialQuery, onGoBack, onGoHome, onOpenReader, onOp
           </button>
         </div>
 
-        {query.trim().length < 2 ? (
+        {activeTab === 'strong' ? (
+          <section className="mt-4 space-y-3">
+            {isStrongLoading ? (
+              <div className="flex items-center gap-2 rounded-[24px] border border-white/10 bg-white/[0.04] p-4 text-sm text-white/72">
+                <LoaderCircle className="h-4 w-4 animate-spin" />{copy.strongLoading}
+              </div>
+            ) : strongError ? (
+              <div className="rounded-[24px] border border-amber-300/20 bg-amber-300/10 p-4 text-sm text-amber-100">{strongError}</div>
+            ) : query.trim().length < 2 ? (
+              <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 text-sm leading-6 text-white/72">
+                {strongData ? `${strongData.entries.length.toLocaleString(currentLanguage === 'en' ? 'en-US' : 'es-ES')} · ` : ''}{copy.strongIntro}
+              </div>
+            ) : strongMatches.length === 0 ? (
+              <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4 text-sm text-white/72">{copy.noResults}</div>
+            ) : (
+              strongMatches.map((entry) => {
+                const references = strongData?.concordance[entry.number] ?? [];
+                return (
+                  <article key={entry.number} className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
+                    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                      <span className="text-xs font-black uppercase tracking-widest text-[#f0c15c]">{entry.number}</span>
+                      <h2 className="text-lg font-bold text-white">{entry.xlit || entry.lemma}</h2>
+                      <span className="text-sm text-white/60">{entry.lemma}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-white/50">{entry.pronounce}</p>
+                    <p className="mt-3 text-sm leading-6 text-white/78">{entry.description}</p>
+                    <p className="mt-3 text-[11px] font-bold uppercase tracking-wider text-[#7fb8ff]">
+                      {references.length.toLocaleString(currentLanguage === 'en' ? 'en-US' : 'es-ES')} {copy.strongVerses}
+                    </p>
+                    {references.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {references.slice(0, 12).map((referenceId) => {
+                          const reference = getStrongReference(referenceId);
+                          if (!reference) return null;
+                          return (
+                            <button key={referenceId} type="button" onClick={() => onOpenVerse(reference.book.abrev, reference.chapter, reference.verse)} className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-white/75 transition hover:border-[#f0c15c]/50 hover:text-white">
+                              {reference.book.names[0]} {reference.chapter}:{reference.verse}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </article>
+                );
+              })
+            )}
+          </section>
+        ) : query.trim().length < 2 ? (
           <section className="mt-4 rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
             <h2 className="max-w-sm text-xl font-bold leading-7 text-white">{copy.helpTitle}</h2>
             <div className="mt-4 space-y-3 text-sm text-white/72">

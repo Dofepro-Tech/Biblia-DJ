@@ -13,6 +13,7 @@ import { BrandSeal } from '@/src/components/BrandSeal';
 import { trackEvent } from '@/src/lib/analytics';
 
 interface BibleReaderProps {
+  isNativeApp: boolean;
   chapterData: ChapterData | null;
   isLoading: boolean;
   selectedVerse: Verse | null;
@@ -67,7 +68,7 @@ interface BibleReaderProps {
 
 export function BibleReader(props: BibleReaderProps) {
   const {
-    chapterData, isLoading, selectedVerse, onSelectVerse, onMenuClick, books, selectedBook, selectedChapter, onSelectBook, onSelectChapter,
+    isNativeApp, chapterData, isLoading, selectedVerse, onSelectVerse, onMenuClick, books, selectedBook, selectedChapter, onSelectBook, onSelectChapter,
     isDarkMode, onToggleDarkMode, highlights, onHighlightVerse, fontSize, setFontSize, accentColor, setAccentColor, voiceURI, setVoiceURI,
     onAddBookmark, bookmarks, onOpenFavorites, onNavigateToVerse, onOpenDailyExperience, challengeSummary, onGoBack, onGoHome, onOpenGame, onOpenSearch, onOpenPlans, onOpenDownloadModal, onOpenOpinions, onOpenDictionary, onOpenUser, onOpenStudy, onOpenAboutLegal
   } = props;
@@ -223,7 +224,7 @@ export function BibleReader(props: BibleReaderProps) {
           <div className="flex items-center gap-4">
              <button onClick={() => i18n.changeLanguage(currentLanguage === 'es' ? 'en' : 'es')} className="px-3 py-1.5 rounded-full border border-white/10 text-xs font-bold bg-white/5 transition-all"><Globe className="h-3.5 w-3.5 mr-2 inline" />{currentLanguage === 'es' ? 'Español' : 'English'}</button>
              <button onClick={onOpenUser} className="px-4 py-2 rounded-full bg-[var(--primary)] text-white text-xs font-bold hover:bg-[var(--primary-hover)] transition-all">Iniciar Sesión</button>
-             <button onClick={onOpenDownloadModal} className="inline-flex items-center gap-2 rounded-full border border-[var(--primary)]/35 bg-[var(--primary)]/12 px-3 py-2 text-xs font-bold text-[var(--primary)] transition-all hover:bg-[var(--primary)]/20"><Download className="h-4 w-4" />Descargar APK</button>
+             {!isNativeApp && <button onClick={onOpenDownloadModal} className="inline-flex items-center gap-2 rounded-full border border-[var(--primary)]/35 bg-[var(--primary)]/12 px-3 py-2 text-xs font-bold text-[var(--primary)] transition-all hover:bg-[var(--primary)]/20"><Download className="h-4 w-4" />Descargar APK</button>}
              <button onClick={onToggleDarkMode} className="theme-toggle-action p-2 rounded-xl hover:bg-white/5 transition-all" aria-label={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}>{isDarkMode ? <Sun className="h-5 w-5 text-amber-300" /> : <Moon className="h-5 w-5 text-rose-400" />}</button>
           </div>
         </div>
@@ -239,7 +240,7 @@ export function BibleReader(props: BibleReaderProps) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-           <button onClick={onOpenDownloadModal} className="rounded-xl border border-[var(--primary)]/35 bg-[var(--primary)]/15 p-2 text-[var(--primary)]" title="Descargar APK" aria-label="Descargar APK"><Download className="h-5 w-5" /></button>
+           {!isNativeApp && <button onClick={onOpenDownloadModal} className="rounded-xl border border-[var(--primary)]/35 bg-[var(--primary)]/15 p-2 text-[var(--primary)]" title="Descargar APK" aria-label="Descargar APK"><Download className="h-5 w-5" /></button>}
            <button onClick={() => onOpenSearch?.()} className="p-2 text-white/50"><Search className="h-5 w-5" /></button>
            <button onClick={() => i18n.changeLanguage(currentLanguage === 'es' ? 'en' : 'es')} className="text-[10px] font-bold uppercase">{currentLanguage === 'es' ? 'ES' : 'EN'}</button>
         </div>

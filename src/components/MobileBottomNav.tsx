@@ -110,7 +110,7 @@ export function MobileBottomNav({ items, className }: MobileBottomNavProps) {
           <button
             key={item.id}
             type="button"
-            onClick={item.onClick}
+            onClick={() => item.onClick()}
             className={cn(
               'relative flex min-w-0 flex-col items-center justify-center gap-0.5 rounded-[20px] px-0.5 py-1.5 transition-all',
               item.active
@@ -157,6 +157,11 @@ export function MobilePageFooter({ className, onOpenAboutLegal, onOpenOpinions, 
           <button onClick={() => onOpenDictionary?.()} className="hover:text-[var(--primary)] transition-colors">Diccionario</button>
           <button onClick={() => onOpenAboutLegal?.('terms')} className="hover:text-[var(--primary)] transition-colors">{t('menu.terms')}</button>
           <button onClick={() => onOpenAboutLegal?.('privacy')} className="hover:text-[var(--primary)] transition-colors">{t('menu.privacy')}</button>
+        </div>
+
+        <div className="max-w-xl text-center">
+          <p className="font-serif text-sm italic text-ink-light/80">Haciéndolo de corazón, como para el Señor.</p>
+          <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-olive/60">Colosenses 3:23</p>
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 font-sans text-[10px] font-medium tracking-wide text-white/30">

@@ -32,6 +32,10 @@ export function SplashScreen({ isReady = false }: { isReady?: boolean }) {
               />
             </div>
           </div>
+          <div className="max-w-xs text-center">
+            <p className="font-serif text-sm italic leading-relaxed text-white/85">Haciéndolo de corazón, como para el Señor.</p>
+            <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-white/60">Colosenses 3:23</p>
+          </div>
         </motion.div>
       </div>
     </motion.div>

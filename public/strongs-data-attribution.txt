@@ -1,0 +1,10 @@
+Strong lexicon
+https://github.com/mormon-documentation-project/strongs
+License: Unlicense (public domain dedication).
+The source lexicon is derived from OpenScriptures Strong's data. Original definitions are in English.
+
+Interlinear Strong references
+https://github.com/tahmmee/interlinear_bibledata
+The upstream README declares its text public domain. The source notes missing coverage for 1 Kings 22 and 3 John 15.
+
+The compact strongs-concordance.json file is an index generated from those public-domain interlinear files.

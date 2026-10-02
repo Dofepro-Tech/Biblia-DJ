@@ -1,14 +1,17 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BookOpen, Calendar, ChevronLeft, Heart, House, Search, User, X, Book as BookIcon, ChevronRight } from 'lucide-react';
+import { BookOpen, Calendar, ChevronLeft, Heart, House, LoaderCircle, Search, User, X, Book as BookIcon, ChevronRight } from 'lucide-react';
 import { MobileBottomNav, MobilePageFooter } from '@/src/components/MobileBottomNav';
 import { normalizeAppLanguage } from '@/src/lib/language';
 import { type AboutLegalType } from '@/src/components/AboutLegalModal';
 import { cn } from '@/src/lib/utils';
 import { useTranslation } from 'react-i18next';
+import { loadStrongLexicon, searchStrongEntries, type StrongLexiconEntry } from '@/src/lib/strongLexicon';
 
 interface DictionaryEntry {
   word: string;
   definition: string;
+  strongNumber?: string;
+  lemma?: string;
 }
 
 const SAMPLE_ENTRIES: DictionaryEntry[] = [
@@ -43,13 +46,39 @@ export function DictionaryHub({ onGoBack, onGoHome, onOpenReader, onOpenPlans, o
   const { t, i18n } = useTranslation();
   const currentLanguage = normalizeAppLanguage(i18n.resolvedLanguage || i18n.language);
   const [searchTerm, setSearchTerm] = useState('');
+  const [strongEntries, setStrongEntries] = useState<StrongLexiconEntry[]>([]);
+  const [isStrongLoading, setIsStrongLoading] = useState(true);
+  const [strongLoadError, setStrongLoadError] = useState(false);
+
+  useEffect(() => {
+    let isCancelled = false;
+    void loadStrongLexicon()
+      .then((data) => { if (!isCancelled) setStrongEntries(data.entries); })
+      .catch(() => { if (!isCancelled) setStrongLoadError(true); })
+      .finally(() => { if (!isCancelled) setIsStrongLoading(false); });
+
+    return () => { isCancelled = true; };
+  }, []);
+
+  const strongResults = useMemo(() => {
+    const matches = searchTerm.trim()
+      ? searchStrongEntries(strongEntries, searchTerm, 40)
+      : strongEntries.slice(0, 24);
+    return matches.map((entry) => ({
+      word: entry.xlit || entry.lemma,
+      definition: entry.description,
+      strongNumber: entry.number,
+      lemma: entry.lemma,
+    }));
+  }, [searchTerm, strongEntries]);
 
   const filteredEntries = useMemo(() => {
     const q = searchTerm.trim().toLowerCase();
-    if (!q) return SAMPLE_ENTRIES;
-    return SAMPLE_ENTRIES.filter(e => e.word.toLowerCase().includes(q) || e.definition.toLowerCase().includes(q));
-  }, [searchTerm]);
-
+    const curatedEntries = q
+      ? SAMPLE_ENTRIES.filter((entry) => entry.word.toLowerCase().includes(q) || entry.definition.toLowerCase().includes(q))
+      : SAMPLE_ENTRIES;
+    return [...curatedEntries, ...strongResults].slice(0, 50);
+  }, [searchTerm, strongResults]);
   const mobileNavItems = useMemo(() => ([
     { id: 'home', label: t('app.home'), icon: <House className="h-5 w-5" />, onClick: onGoHome },
     { id: 'reader', label: t('menu.books'), icon: <BookOpen className="h-5 w-5" />, onClick: onOpenReader },
@@ -79,6 +108,16 @@ export function DictionaryHub({ onGoBack, onGoHome, onOpenReader, onOpenPlans, o
               className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-12 pr-4 outline-none focus:border-[var(--primary)] transition-all"
             />
           </div>
+          <div className="mt-3 flex min-h-6 items-center gap-2 text-xs text-white/55">
+            {isStrongLoading && <LoaderCircle className="h-3.5 w-3.5 animate-spin" />}
+            {strongLoadError
+              ? (currentLanguage === 'en' ? 'Strong lexicon is unavailable offline.' : 'El léxico Strong no está disponible sin conexión.')
+              : strongEntries.length > 0
+                ? (currentLanguage === 'en'
+                  ? `${strongEntries.length.toLocaleString('en-US')} Strong entries · original definitions in English`
+                  : `${strongEntries.length.toLocaleString('es-ES')} entradas Strong · definiciones originales en inglés`)
+                : (currentLanguage === 'en' ? 'Loading complete Strong lexicon…' : 'Cargando el léxico Strong completo…')}
+          </div>
         </div>
 
         <div className="max-w-4xl mx-auto grid gap-4 md:grid-cols-2">
@@ -86,10 +125,14 @@ export function DictionaryHub({ onGoBack, onGoHome, onOpenReader, onOpenPlans, o
             <div className="col-span-full text-center py-20 opacity-30 italic">No se encontraron términos para "{searchTerm}".</div>
           ) : (
             filteredEntries.map(e => (
-              <div key={e.word} className="p-6 rounded-[28px] border border-white/5 bg-white/[0.03] hover:border-[var(--primary)]/20 transition-all group">
+              <div key={e.strongNumber ?? e.word} className="p-6 rounded-[28px] border border-white/5 bg-white/[0.03] hover:border-[var(--primary)]/20 transition-all group">
                 <div className="flex items-center gap-3 mb-3">
                    <div className="h-9 w-9 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)]"><BookIcon className="h-5 w-5" /></div>
-                   <h3 className="text-lg font-bold group-hover:text-[var(--primary)] transition-colors">{e.word}</h3>
+                   <div className="min-w-0">
+                     {e.strongNumber && <p className="text-[10px] font-bold uppercase tracking-wider text-[#f0c15c]">{e.strongNumber}</p>}
+                     <h3 className="text-lg font-bold group-hover:text-[var(--primary)] transition-colors">{e.word}</h3>
+                     {e.lemma && <p className="text-xs text-white/50">{e.lemma}</p>}
+                   </div>
                 </div>
                 <p className="text-sm leading-relaxed text-white/70">{e.definition}</p>
               </div>
@@ -97,8 +140,10 @@ export function DictionaryHub({ onGoBack, onGoHome, onOpenReader, onOpenPlans, o
           )}
         </div>
 
-        <div className="max-w-4xl mx-auto p-6 rounded-3xl border border-dashed border-white/10 text-center">
-           <p className="text-xs opacity-30">Esta es una versión preliminar del Diccionario Bíblico. Próximamente incluiremos la Concordancia Strong y más de 5,000 términos completos.</p>
+          <div className="max-w-4xl mx-auto p-5 rounded-3xl border border-dashed border-white/10 text-center text-xs leading-5 text-white/55">
+            {currentLanguage === 'en'
+             ? 'Strong lexicon source: OpenScriptures-derived public-domain data (Unlicense). Original source definitions are in English. The Strong tab includes linked verse references.'
+             : 'Fuente del léxico Strong: datos de dominio público derivados de OpenScriptures (Unlicense). Las definiciones originales están en inglés. La pestaña Strong incluye referencias a versículos; el interlineal fuente omite 1 Reyes 22 y 3 Juan 15.'}
         </div>
 
         <MobilePageFooter onOpenAboutLegal={onOpenAboutLegal} />

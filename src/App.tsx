@@ -363,7 +363,7 @@ export default function App() {
   };
 
   const openSearchHub = (query?: string) => {
-    setActiveSearchQuery(query);
+    setActiveSearchQuery(typeof query === 'string' ? query : undefined);
     navigateToMainView('search');
     setSelectedVerse(null);
     setIsSidebarOpen(false);
@@ -1135,6 +1135,7 @@ export default function App() {
           />
         ) : (
           <BibleReader 
+            isNativeApp={isNativePlatform}
             chapterData={chapterData} 
             isLoading={isLoading} 
             selectedVerse={selectedVerse} 
