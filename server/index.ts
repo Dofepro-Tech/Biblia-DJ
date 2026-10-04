@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import express from 'express';
-import type { RequestHandler, Response } from 'express';
+import type { Request, RequestHandler, Response } from 'express';
 import { getBibleVersion, normalizeAppLanguage } from '../src/lib/language.ts';
 import type { ChapterData, ChatMessage, StudyStep } from '../src/types.ts';
 import {
@@ -804,6 +804,91 @@ app.post('/api/auth/profile', (request, response) => {
   return proxySupabaseAuth(response, 'user', {
     data: { display_name: displayName.trim().slice(0, 80) },
   }, accessToken, 'PUT');
+});
+
+interface GameProgressPayload {
+  currentLevel: number;
+  completedLevels: number[];
+  levelStars: Record<number, number>;
+  wordsFoundTotal: number;
+  rewardPoints: number;
+  lastPlayedLevel: number;
+}
+
+function getAccessToken(request: Request) {
+  return request.get('authorization')?.match(/^Bearer\s+(.+)$/i)?.[1] || '';
+}
+
+function normalizeGameProgress(value: unknown): GameProgressPayload | null {
+  if (!value || typeof value !== 'object') return null;
+  const progress = value as Partial<GameProgressPayload>;
+  const readInteger = (candidate: unknown, minimum: number, maximum: number) => (
+    typeof candidate === 'number' && Number.isInteger(candidate) && candidate >= minimum && candidate <= maximum ? candidate : null
+  );
+  const currentLevel = readInteger(progress.currentLevel, 1, 250);
+  const lastPlayedLevel = readInteger(progress.lastPlayedLevel, 1, 250);
+  const wordsFoundTotal = readInteger(progress.wordsFoundTotal, 0, 100000);
+  const rewardPoints = readInteger(progress.rewardPoints, 0, 1000000);
+  if (currentLevel === null || lastPlayedLevel === null || wordsFoundTotal === null || rewardPoints === null || !Array.isArray(progress.completedLevels)) return null;
+  const completedLevels = [...new Set(progress.completedLevels)]
+    .filter((level): level is number => typeof level === 'number' && Number.isInteger(level) && level > 0 && level <= 250)
+    .sort((left, right) => left - right);
+  const levelStars = Object.fromEntries(Object.entries(progress.levelStars ?? {}).filter(([level, stars]) => (
+    Number.isInteger(Number(level)) && Number(level) > 0 && Number(level) <= 250 && stars >= 1 && stars <= 3 && Number.isInteger(stars)
+  )).map(([level, stars]) => [Number(level), stars]));
+  return { currentLevel, completedLevels, levelStars, wordsFoundTotal, rewardPoints, lastPlayedLevel };
+}
+
+async function getAuthenticatedUserId(accessToken: string) {
+  if (!supabaseAuthUrl || !supabaseAnonKey || !accessToken) return null;
+  const profileResponse = await fetch(`${supabaseAuthUrl}/auth/v1/user`, {
+    headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${accessToken}` },
+  });
+  const profile = await profileResponse.json().catch(() => null) as { id?: unknown } | null;
+  return profileResponse.ok && typeof profile?.id === 'string' ? profile.id : null;
+}
+
+app.get('/api/game-progress', async (request, response) => {
+  const accessToken = getAccessToken(request);
+  if (!supabaseAuthUrl || !supabaseAnonKey) return sendError(response, 503, 'El progreso del juego no está configurado.');
+  const userId = await getAuthenticatedUserId(accessToken);
+  if (!userId) return sendError(response, 401, 'Tu sesión expiró. Inicia sesión de nuevo para sincronizar el juego.');
+  try {
+    const result = await fetch(`${supabaseAuthUrl}/rest/v1/user_game_progress?user_id=eq.${encodeURIComponent(userId)}&select=progress&limit=1`, {
+      headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${accessToken}` },
+    });
+    const payload = await result.json().catch(() => []);
+    if (!result.ok) return sendError(response, 502, 'No se pudo cargar el progreso del juego.');
+    const progress = Array.isArray(payload) ? normalizeGameProgress(payload[0]?.progress) : null;
+    return response.json({ progress });
+  } catch {
+    return sendError(response, 502, 'No se pudo conectar con el progreso del juego.');
+  }
+});
+
+app.put('/api/game-progress', async (request, response) => {
+  const accessToken = getAccessToken(request);
+  const progress = normalizeGameProgress(request.body?.progress);
+  if (!supabaseAuthUrl || !supabaseAnonKey) return sendError(response, 503, 'El progreso del juego no está configurado.');
+  const userId = await getAuthenticatedUserId(accessToken);
+  if (!userId) return sendError(response, 401, 'Tu sesión expiró. Inicia sesión de nuevo para sincronizar el juego.');
+  if (!progress) return sendError(response, 400, 'El progreso del juego no es válido.');
+  try {
+    const result = await fetch(`${supabaseAuthUrl}/rest/v1/user_game_progress?on_conflict=user_id`, {
+      method: 'POST',
+      headers: {
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates,return=representation',
+      },
+      body: JSON.stringify({ user_id: userId, progress, updated_at: new Date().toISOString() }),
+    });
+    if (!result.ok) return sendError(response, 502, 'No se pudo guardar el progreso del juego.');
+    return response.json({ progress });
+  } catch {
+    return sendError(response, 502, 'No se pudo conectar con el progreso del juego.');
+  }
 });
 const opinionsSupabaseUrl = process.env.OPINIONS_SUPABASE_URL;
 const opinionsSupabaseKey = process.env.OPINIONS_SUPABASE_SECRET_KEY || process.env.OPINIONS_SUPABASE_SERVICE_ROLE_KEY;

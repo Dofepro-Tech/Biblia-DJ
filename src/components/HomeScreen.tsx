@@ -1,5 +1,6 @@
 import { startTransition, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { Capacitor } from '@capacitor/core';
 import type { AboutLegalType } from '@/src/components/AboutLegalModal';
 import { Book, Bookmark as BibleBookmark, ReadingChallengeSummary, SidebarBookFilter } from '@/src/types';
 import { type DailyContentKind, type DailyResourceCard } from '@/src/lib/dailyContent';
@@ -438,7 +439,7 @@ export function HomeScreen(props: HomeScreenProps) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {!isNativeApp && <button onClick={onOpenDownloadModal} className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--primary)]/35 bg-[var(--primary)]/15 text-[var(--primary)]" title="Descargar APK" aria-label="Descargar APK"><Download className="h-5 w-5" /></button>}
+            {!isNativeApp && !Capacitor.isNativePlatform() && <button onClick={onOpenDownloadModal} className="flex h-11 w-11 items-center justify-center rounded-2xl border border-[var(--primary)]/35 bg-[var(--primary)]/15 text-[var(--primary)]" title="Descargar APK" aria-label="Descargar APK"><Download className="h-5 w-5" /></button>}
             <button onClick={() => setIsHelpModalOpen(true)} className="help-action flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white"><HelpCircle className="h-5 w-5 text-sky-400" /></button>
           </div>
         </header>
@@ -532,7 +533,7 @@ export function HomeScreen(props: HomeScreenProps) {
                 <span>Iniciar Sesión</span>
               </button>
 
-              {!isNativeApp && (
+              {!isNativeApp && !Capacitor.isNativePlatform() && (
                 <button
                   type="button"
                   onClick={onOpenDownloadModal}

@@ -384,7 +384,7 @@ function buildRemoteCard(language: AppLanguage, source: FeedSource, item: Remote
     id: sanitizeId(`${source.id}-${item.guid || sourceUrl || itemTitle}`) || `${source.id}-${publishedAt}`,
     title: truncateText(itemTitle || source.fallbackTitle[language], 96),
     body: truncateText(language === 'es' && sectionKey === 'sermons' ? source.fallbackBody.es : snippet || source.fallbackBody[language], 180),
-    imageUrl: source.imageUrl || (enclosureIsImage ? imageUrl : undefined) || extractFirstImageUrl(item['content:encoded']) || extractFirstImageUrl(item.content) || extractFirstImageUrl(item.summary),
+    imageUrl: (enclosureIsImage ? imageUrl : undefined) || extractFirstImageUrl(item['content:encoded']) || extractFirstImageUrl(item.content) || extractFirstImageUrl(item.summary) || source.imageUrl,
     imageAlt: itemTitle || source.fallbackTitle[language],
     sourceName: source.sourceName[language],
     sourceUrl,

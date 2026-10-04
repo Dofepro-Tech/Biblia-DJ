@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { Capacitor } from '@capacitor/core';
 import { Book, ChapterData, Verse, Highlight, Bookmark, ReadingChallengeSummary, SidebarBookFilter } from '@/src/types';
 import { cn } from '@/src/lib/utils';
 import { PanelNavButtons } from '@/src/components/PanelNavButtons';
@@ -290,7 +291,7 @@ export function BibleReader(props: BibleReaderProps) {
           <div className="flex items-center gap-4">
              <button onClick={() => i18n.changeLanguage(currentLanguage === 'es' ? 'en' : 'es')} className="px-3 py-1.5 rounded-full border border-white/10 text-xs font-bold bg-white/5 transition-all"><Globe className="h-3.5 w-3.5 mr-2 inline" />{currentLanguage === 'es' ? 'Español' : 'English'}</button>
              <button onClick={onOpenUser} className="px-4 py-2 rounded-full bg-[var(--primary)] text-white text-xs font-bold hover:bg-[var(--primary-hover)] transition-all">Iniciar Sesión</button>
-             {!isNativeApp && <button onClick={onOpenDownloadModal} className="inline-flex items-center gap-2 rounded-full border border-[var(--primary)]/35 bg-[var(--primary)]/12 px-3 py-2 text-xs font-bold text-[var(--primary)] transition-all hover:bg-[var(--primary)]/20"><Download className="h-4 w-4" />Descargar APK</button>}
+             {!isNativeApp && !Capacitor.isNativePlatform() && <button onClick={onOpenDownloadModal} className="inline-flex items-center gap-2 rounded-full border border-[var(--primary)]/35 bg-[var(--primary)]/12 px-3 py-2 text-xs font-bold text-[var(--primary)] transition-all hover:bg-[var(--primary)]/20"><Download className="h-4 w-4" />Descargar APK</button>}
              <button onClick={onToggleDarkMode} className="theme-toggle-action p-2 rounded-xl hover:bg-white/5 transition-all" aria-label={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}>{isDarkMode ? <Sun className="h-5 w-5 text-amber-300" /> : <Moon className="h-5 w-5 text-rose-400" />}</button>
           </div>
         </div>
@@ -306,7 +307,7 @@ export function BibleReader(props: BibleReaderProps) {
           </div>
         </div>
         <div className="flex items-center gap-2">
-           {!isNativeApp && <button onClick={onOpenDownloadModal} className="rounded-xl border border-[var(--primary)]/35 bg-[var(--primary)]/15 p-2 text-[var(--primary)]" title="Descargar APK" aria-label="Descargar APK"><Download className="h-5 w-5" /></button>}
+           {!isNativeApp && !Capacitor.isNativePlatform() && <button onClick={onOpenDownloadModal} className="rounded-xl border border-[var(--primary)]/35 bg-[var(--primary)]/15 p-2 text-[var(--primary)]" title="Descargar APK" aria-label="Descargar APK"><Download className="h-5 w-5" /></button>}
            <button onClick={() => onOpenSearch?.()} className="p-2 text-white/50"><Search className="h-5 w-5" /></button>
            <button onClick={() => i18n.changeLanguage(currentLanguage === 'es' ? 'en' : 'es')} className="text-[10px] font-bold uppercase">{currentLanguage === 'es' ? 'ES' : 'EN'}</button>
         </div>
@@ -360,21 +361,22 @@ export function BibleReader(props: BibleReaderProps) {
           </nav>
         )}
         {chapterData && isSpeechAvailable && (
-          <div className={cn('mb-6 flex flex-wrap items-center gap-2 rounded-2xl border p-2', isDarkMode ? 'border-white/10 bg-white/5' : 'border-[#d8e4f2] bg-white')}>
-            <button type="button" onClick={playChapter} className={cn('inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition-colors', isPlayingChapter ? 'bg-[var(--primary)] text-white' : isDarkMode ? 'bg-white/10 text-white hover:bg-white/15' : 'bg-[#edf5ff] text-[#174a80] hover:bg-[#dceeff]')}>
+          <div className="fixed bottom-[calc(env(safe-area-inset-bottom)+5.25rem)] left-1/2 z-40 flex w-[min(calc(100vw-1.5rem),32rem)] -translate-x-1/2 items-center justify-between gap-1 rounded-full border border-white/10 bg-[#0a1d33]/95 p-1.5 shadow-[0_14px_36px_rgba(0,0,0,0.28)] backdrop-blur-xl lg:bottom-6 lg:left-6 lg:w-max lg:max-w-[calc(100vw-5.5rem)] lg:translate-x-0">
+            <button type="button" onClick={playChapter} className={cn('inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-3 text-xs font-bold transition-colors', isPlayingChapter ? 'bg-[var(--primary)] text-white' : 'bg-white/10 text-white hover:bg-white/15')}>
               {isPlayingChapter ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-              {isPlayingChapter ? t('audio.stop') : t('audio.read')}
+              <span>{isPlayingChapter ? t('audio.stop') : (currentLanguage.startsWith('en') ? 'Chapter' : 'Capítulo')}</span>
             </button>
+            <div className="flex min-w-0 items-center gap-1 px-1 text-[10px] font-bold text-white/80" title={`${chapterData.name} ${chapterData.chapter}${selectedVerse ? `:${selectedVerse.number}` : ''}`}>
+              <BookOpen className="h-4 w-4 shrink-0 text-[#8bc2ff]" />
+              <span className="truncate">{chapterData.name} {chapterData.chapter}{selectedVerse ? `:${selectedVerse.number}` : ''}</span>
+            </div>
             {selectedVerse && (
               <>
-                <span className={cn('ml-1 text-xs font-semibold', isDarkMode ? 'text-white/70' : 'text-[#456685]')}>
-                  {chapterData.name} {chapterData.chapter}:{selectedVerse.number}
-                </span>
-                <button type="button" onClick={() => playVerse(selectedVerse)} className={cn('inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition-colors', isPlayingVerseNumber === selectedVerse.number ? 'bg-[var(--primary)] text-white' : isDarkMode ? 'bg-white/10 text-white hover:bg-white/15' : 'bg-[#edf5ff] text-[#174a80] hover:bg-[#dceeff]')}>
+                <button type="button" onClick={() => playVerse(selectedVerse)} className={cn('inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-3 text-xs font-bold transition-colors', isPlayingVerseNumber === selectedVerse.number ? 'bg-[var(--primary)] text-white' : 'bg-white/10 text-white hover:bg-white/15')}>
                   {isPlayingVerseNumber === selectedVerse.number ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                  {isPlayingVerseNumber === selectedVerse.number ? t('audio.stop') : t('audio.play_verse')}
+                  <span>{isPlayingVerseNumber === selectedVerse.number ? t('audio.stop') : (currentLanguage.startsWith('en') ? 'Verse' : 'Versículo')}</span>
                 </button>
-                <button type="button" onClick={() => props.onClearSelectedVerse?.()} className={cn('ml-auto rounded-lg p-2 transition-colors', isDarkMode ? 'text-white/60 hover:bg-white/10 hover:text-white' : 'text-[#587392] hover:bg-[#edf5ff] hover:text-[#174a80]')} title={t('app.close_verse_actions')} aria-label={t('app.close_verse_actions')}>
+                <button type="button" onClick={() => props.onClearSelectedVerse?.()} className="shrink-0 rounded-full p-2 text-white/65 transition-colors hover:bg-white/10 hover:text-white" title={t('app.close_verse_actions')} aria-label={t('app.close_verse_actions')}>
                   <X className="h-4 w-4" />
                 </button>
               </>

@@ -90,7 +90,7 @@ export default function App() {
   const { i18n, t } = useTranslation();
   const currentLang = normalizeAppLanguage(i18n.resolvedLanguage || i18n.language);
   const currentAppVersion = getCurrentAppVersion();
-  const isNativePlatform = typeof window !== 'undefined' && Capacitor.isNativePlatform();
+  const isNativePlatform = typeof window !== 'undefined' && (Capacitor.isNativePlatform() || Capacitor.getPlatform() !== 'web');
   const minimumSplashDuration = isNativePlatform ? 520 : 3200;
   const bootstrapFallbackDuration = isNativePlatform ? 2600 : 5600;
 
@@ -1062,7 +1062,7 @@ export default function App() {
             <LazyChristianGameHub
               onBack={handleGoBack}
               onGoHome={handleGoHome}
-              onOpenBooks={() => openSidebar('all')}
+              onOpenBooks={openReaderSelector}
               onOpenStudy={() => setIsStudyModeOpen(true)}
               onOpenDailyExperience={() => setIsDailyExperienceOpen(true)}
               onOpenFavorites={() => setIsRightSidebarOpen(true)}

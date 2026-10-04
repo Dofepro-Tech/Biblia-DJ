@@ -2,7 +2,10 @@ import { useEffect, useRef, useState } from 'react';
 import type { ReactNode, RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { AnimatePresence, motion } from 'motion/react';
-import { ArrowRight, BookOpen, Flame, Gamepad2, Globe, Heart, Info, Moon, MoreVertical, Settings, Share2, Sparkles, Sun, Volume2, X, House } from 'lucide-react';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
+import { TextToSpeech } from '@capacitor-community/text-to-speech';
+import { ArrowRight, BookOpen, Download, Flame, Gamepad2, Globe, Heart, Info, Moon, MoreVertical, RefreshCw, Settings, Share2, Sparkles, Sun, Volume2, X, House } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '@/src/lib/utils';
 import { canUseSpeechSynthesis, getSpeechVoices, setSpeechVoicesChangedListener } from '@/src/lib/speech';
@@ -69,14 +72,44 @@ export function AppOverflowMenu({
   const [voices, setVoices] = useState<SpeechSynthesisVoice[]>([]);
   const menuRef = useRef<HTMLDivElement>(null);
   const currentLanguage = i18n.resolvedLanguage || i18n.language;
+  const isAndroidApp = Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android';
 
   useEffect(() => {
     if (!canUseSpeechSynthesis()) return;
-    const loadVoices = () => setVoices(getSpeechVoices());
-    loadVoices();
-    setSpeechVoicesChangedListener(loadVoices);
-    return () => setSpeechVoicesChangedListener(null);
+    let isDisposed = false;
+    let removeAppStateListener: (() => void) | undefined;
+    const loadVoices = async () => {
+      try {
+        const availableVoices = isAndroidApp
+          ? (await TextToSpeech.getSupportedVoices()).voices
+          : getSpeechVoices();
+        if (!isDisposed) setVoices(availableVoices);
+      } catch (error) {
+        console.error('Error refreshing speech voices:', error);
+      }
+    };
+
+    void loadVoices();
+    setSpeechVoicesChangedListener(() => { void loadVoices(); });
+    if (isAndroidApp) {
+      void CapacitorApp.addListener('appStateChange', ({ isActive }) => {
+        if (isActive) void loadVoices();
+      }).then((listener) => {
+        if (isDisposed) void listener.remove();
+        else removeAppStateListener = () => { void listener.remove(); };
+      });
+    }
+
+    return () => {
+      isDisposed = true;
+      setSpeechVoicesChangedListener(null);
+      removeAppStateListener?.();
+    };
   }, []);
+
+  useEffect(() => {
+    if (voiceURI.startsWith('gemini-tts:')) setVoiceURI('');
+  }, [voiceURI, setVoiceURI]);
 
   useEffect(() => {
     if (!isOpen || inline) return;
@@ -95,6 +128,23 @@ export function AppOverflowMenu({
   const buttonTone = isDarkMode ? 'bg-white/5 border-white/10 hover:bg-white/10' : 'bg-white border-slate-200 hover:bg-slate-50';
   const activeTone = 'bg-[var(--primary)] border-[var(--primary)] text-white';
   const themePalettes = isDarkMode ? darkThemePalettes : lightThemePalettes;
+
+  const openVoiceInstaller = async () => {
+    try {
+      await TextToSpeech.openInstall();
+    } catch (error) {
+      console.error('Error opening Android voice installer:', error);
+    }
+  };
+
+  const refreshVoices = async () => {
+    try {
+      const result = await TextToSpeech.getSupportedVoices();
+      setVoices(result.voices);
+    } catch (error) {
+      console.error('Error refreshing Android voices:', error);
+    }
+  };
 
   return (
     <div className="relative">
@@ -143,6 +193,53 @@ export function AppOverflowMenu({
                       <input type="range" min="14" max="32" value={fontSize} onChange={(e) => setFontSize(Number(e.target.value))} className="flex-1 accent-[var(--primary)]" />
                       <span className="text-lg">A</span>
                     </div>
+                  </div>
+
+                  <div className="space-y-3 border-t border-white/5 pt-6">
+                    <label htmlFor="speech-voice" className={cn('flex items-center gap-2 font-sans text-xs font-bold uppercase tracking-[0.22em]', panelSubtle)}>
+                      <Volume2 className="h-4 w-4" />
+                      {currentLanguage.startsWith('es') ? 'Voz para los audios' : 'Audio voice'}
+                    </label>
+                    <select
+                      id="speech-voice"
+                      value={voiceURI.startsWith('gemini-tts:') ? '' : voiceURI}
+                      onChange={(event) => setVoiceURI(event.target.value)}
+                      className={cn('min-h-12 w-full rounded-2xl border px-4 py-3 text-sm font-semibold outline-none transition-colors focus:border-[var(--primary)] disabled:cursor-not-allowed disabled:opacity-60', fieldSurface)}
+                    >
+                      <option value="">{currentLanguage.startsWith('es') ? 'Automática (recomendada)' : 'Automatic (recommended)'}</option>
+                      {voices.length > 0 && (
+                        <optgroup label={currentLanguage.startsWith('es') ? 'Voces del dispositivo' : 'Device voices'}>
+                          {voices.map((voice) => (
+                            <option key={voice.voiceURI} value={voice.voiceURI}>
+                              {voice.name}{voice.lang ? ` (${voice.lang})` : ''}
+                            </option>
+                          ))}
+                        </optgroup>
+                      )}
+                      <optgroup label={currentLanguage.startsWith('es') ? 'Gemini · Próximamente' : 'Gemini · Coming soon'}>
+                        <option value="gemini-coming-soon" disabled>{currentLanguage.startsWith('es') ? 'Próximamente' : 'Coming soon'}</option>
+                      </optgroup>
+                    </select>
+                    {voices.length === 0 && (
+                      <p className={cn('text-xs leading-5', panelSubtle)}>
+                        {currentLanguage.startsWith('es') ? 'No hay voces instaladas disponibles en este dispositivo.' : 'No installed voices are available on this device.'}
+                      </p>
+                    )}
+                    {isAndroidApp && (
+                      <div className="grid grid-cols-2 gap-2">
+                        <button type="button" onClick={() => { void openVoiceInstaller(); }} className={cn('inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors', buttonTone)}>
+                          <Download className="h-4 w-4 shrink-0" />
+                          {currentLanguage.startsWith('es') ? 'Instalar voces' : 'Install voices'}
+                        </button>
+                        <button type="button" onClick={() => { void refreshVoices(); }} className={cn('inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors', buttonTone)}>
+                          <RefreshCw className="h-4 w-4 shrink-0" />
+                          {currentLanguage.startsWith('es') ? 'Actualizar lista' : 'Refresh list'}
+                        </button>
+                      </div>
+                    )}
+                    <p className={cn('text-xs leading-5', panelSubtle)}>
+                      {currentLanguage.startsWith('es') ? 'La cantidad de voces depende del motor de texto a voz instalado en Android.' : 'Voice availability depends on the text-to-speech engine installed on Android.'}
+                    </p>
                   </div>
 
                   <div className="space-y-4 border-t border-white/5 pt-6">

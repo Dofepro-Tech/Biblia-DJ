@@ -236,9 +236,9 @@ export function ScrollToTopButton({ targetSelector, label = 'Volver arriba' }: {
           onClick={scrollToTop}
           aria-label={label}
           title={label}
-          className="fixed bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] right-4 z-[55] flex h-12 w-12 items-center justify-center rounded-full border border-[var(--primary)]/40 bg-[var(--primary)] text-white shadow-[0_8px_28px_rgba(var(--primary-rgb),0.4)] transition-shadow hover:shadow-[0_12px_34px_rgba(var(--primary-rgb),0.55)] lg:bottom-6"
+          className="fixed bottom-[calc(env(safe-area-inset-bottom)+5.75rem)] right-3 z-[55] flex h-10 w-10 items-center justify-center rounded-full border border-[var(--primary)]/40 bg-[var(--primary)] text-white shadow-[0_8px_28px_rgba(var(--primary-rgb),0.4)] transition-shadow hover:shadow-[0_12px_34px_rgba(var(--primary-rgb),0.55)] sm:right-4 sm:h-12 sm:w-12 lg:bottom-6"
         >
-          <ArrowUp className="scroll-top-arrow h-5 w-5" />
+          <ArrowUp className="scroll-top-arrow h-4 w-4 sm:h-5 sm:w-5" />
         </motion.button>
       )}
     </AnimatePresence>
