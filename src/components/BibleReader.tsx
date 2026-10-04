@@ -75,6 +75,10 @@ export function BibleReader(props: BibleReaderProps) {
 
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.resolvedLanguage || i18n.language;
+  const speechLanguage = getSpeechLanguage(currentLanguage);
+  const isSpeechAvailable = canUseSpeechSynthesis();
+  const [isPlayingChapter, setIsPlayingChapter] = useState(false);
+  const [isPlayingVerseNumber, setIsPlayingVerseNumber] = useState<number | null>(null);
   const [showWelcomeBookPicker, setShowWelcomeBookPicker] = useState(false);
   const [welcomePickerStep, setWelcomePickerStep] = useState<'books' | 'chapters' | 'verses'>('books');
   const [welcomePickerFilter, setWelcomePickerFilter] = useState<SidebarBookFilter>('all');
@@ -126,6 +130,68 @@ export function BibleReader(props: BibleReaderProps) {
 
   const oldTestamentBooks = books.filter((book) => book.testament.toLowerCase().includes('antiguo') || book.testament.toLowerCase().includes('old'));
   const newTestamentBooks = books.filter((book) => !oldTestamentBooks.includes(book));
+
+  const stopAudio = () => {
+    cancelSpeech();
+    setIsPlayingChapter(false);
+    setIsPlayingVerseNumber(null);
+  };
+
+  const playChapter = () => {
+    if (!chapterData || !isSpeechAvailable) return;
+    if (isPlayingChapter) {
+      stopAudio();
+      return;
+    }
+
+    stopAudio();
+    const didSpeak = speakText({
+      text: `${chapterData.name} ${chapterData.chapter}. ${chapterData.vers.map((verse) => verse.verse).join('. ')}`,
+      lang: speechLanguage,
+      voiceURI,
+      onEnd: () => setIsPlayingChapter(false),
+      onError: () => setIsPlayingChapter(false),
+    });
+    if (didSpeak) setIsPlayingChapter(true);
+  };
+
+  const playVerse = (verse: Verse) => {
+    if (!isSpeechAvailable) return;
+    if (isPlayingVerseNumber === verse.number) {
+      stopAudio();
+      return;
+    }
+
+    stopAudio();
+    const didSpeak = speakText({
+      text: verse.verse,
+      lang: speechLanguage,
+      voiceURI,
+      onEnd: () => setIsPlayingVerseNumber(null),
+      onError: () => setIsPlayingVerseNumber(null),
+    });
+    if (didSpeak) setIsPlayingVerseNumber(verse.number);
+  };
+
+  useEffect(() => () => cancelSpeech(), []);
+
+  useEffect(() => {
+    if (!props.favoriteToPlay || !isSpeechAvailable) return;
+
+    const { bookAbrev, chapter, verseNumber } = props.favoriteToPlay;
+    const book = books.find((candidate) => candidate.abrev === bookAbrev);
+    if (!book || !verseNumber) {
+      props.onFavoritePlayed?.();
+      return;
+    }
+
+    void fetchChapter(book.names[0], chapter, currentLanguage)
+      .then((data) => {
+        const verse = data.vers.find((candidate) => candidate.number === verseNumber);
+        if (verse) playVerse(verse);
+      })
+      .finally(() => props.onFavoritePlayed?.());
+  }, [props.favoriteToPlay, books, currentLanguage, isSpeechAvailable]);
 
   const handleWelcomeChapterSelect = async (chapter: number) => {
     if (!welcomeTempBook) return;
@@ -292,6 +358,28 @@ export function BibleReader(props: BibleReaderProps) {
               }}
             />
           </nav>
+        )}
+        {chapterData && isSpeechAvailable && (
+          <div className={cn('mb-6 flex flex-wrap items-center gap-2 rounded-2xl border p-2', isDarkMode ? 'border-white/10 bg-white/5' : 'border-[#d8e4f2] bg-white')}>
+            <button type="button" onClick={playChapter} className={cn('inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition-colors', isPlayingChapter ? 'bg-[var(--primary)] text-white' : isDarkMode ? 'bg-white/10 text-white hover:bg-white/15' : 'bg-[#edf5ff] text-[#174a80] hover:bg-[#dceeff]')}>
+              {isPlayingChapter ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              {isPlayingChapter ? t('audio.stop') : t('audio.read')}
+            </button>
+            {selectedVerse && (
+              <>
+                <span className={cn('ml-1 text-xs font-semibold', isDarkMode ? 'text-white/70' : 'text-[#456685]')}>
+                  {chapterData.name} {chapterData.chapter}:{selectedVerse.number}
+                </span>
+                <button type="button" onClick={() => playVerse(selectedVerse)} className={cn('inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition-colors', isPlayingVerseNumber === selectedVerse.number ? 'bg-[var(--primary)] text-white' : isDarkMode ? 'bg-white/10 text-white hover:bg-white/15' : 'bg-[#edf5ff] text-[#174a80] hover:bg-[#dceeff]')}>
+                  {isPlayingVerseNumber === selectedVerse.number ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                  {isPlayingVerseNumber === selectedVerse.number ? t('audio.stop') : t('audio.play_verse')}
+                </button>
+                <button type="button" onClick={() => props.onClearSelectedVerse?.()} className={cn('ml-auto rounded-lg p-2 transition-colors', isDarkMode ? 'text-white/60 hover:bg-white/10 hover:text-white' : 'text-[#587392] hover:bg-[#edf5ff] hover:text-[#174a80]')} title={t('app.close_verse_actions')} aria-label={t('app.close_verse_actions')}>
+                  <X className="h-4 w-4" />
+                </button>
+              </>
+            )}
+          </div>
         )}
         {!chapterData || showWelcomeBookPicker ? (
           <div className="min-h-[70vh] flex flex-col items-center justify-center text-center">

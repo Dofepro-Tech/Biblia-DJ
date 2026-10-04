@@ -644,14 +644,15 @@ app.get('/api/daily-content', handleDailyContent);
 
 const supabaseAuthUrl = process.env.SUPABASE_URL?.replace(/\/+$/, '');
 const supabaseAnonKey = process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY;
-const OAUTH_CALLBACK_PATH = '/auth/callback';
+const ANDROID_OAUTH_REDIRECT_URL = 'com.dofepro.biblianj://auth/callback';
 
 function isAllowedAuthRedirect(value: string) {
+  if (value === ANDROID_OAUTH_REDIRECT_URL) {
+    return true;
+  }
+
   try {
     const redirect = new URL(value);
-    if (redirect.protocol === 'com.dofepro.biblianj:') {
-      return redirect.hostname === 'auth' && redirect.pathname === OAUTH_CALLBACK_PATH;
-    }
     return (redirect.protocol === 'https:' || redirect.protocol === 'http:')
       && allowedOrigins.has(redirect.origin);
   } catch {

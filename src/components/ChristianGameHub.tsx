@@ -325,8 +325,8 @@ export function ChristianGameHub({
 
         return {
           ...previousState,
-          wordsFoundTotal: previousState.wordsFoundTotal + 1,
-          rewardPoints: previousState.rewardPoints + wordReward + completionBonus,
+          wordsFoundTotal: previousState.wordsFoundTotal + (alreadyCompleted ? 0 : 1),
+          rewardPoints: previousState.rewardPoints + (alreadyCompleted ? 0 : wordReward + completionBonus),
           completedLevels,
           currentLevel: didCompleteLevel
             ? Math.min(totalLevels, Math.max(previousState.currentLevel, activeLevel.levelNumber + 1))
