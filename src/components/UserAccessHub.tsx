@@ -10,6 +10,7 @@ import { type AboutLegalType } from '@/src/components/AboutLegalModal';
 import { cn } from '@/src/lib/utils';
 import { useTranslation } from 'react-i18next';
 import { createPkceChallenge, createPkceVerifier, exchangeGoogleAuthorizationCode, getGoogleAuthorizationUrl, refreshAuthSession, resendSignupConfirmation, sendPasswordReset, signInWithEmail, signOutFromAuth, signUpWithEmail, updateAuthProfile, type AuthTokens } from '@/src/services/authApi';
+import { AUTH_SESSION_CHANGED_EVENT, USER_SESSION_STORAGE_KEY } from '@/src/lib/authSession';
 
 interface UserAccessHubProps {
   onGoBack: () => void;
@@ -31,7 +32,6 @@ interface StoredSession {
   expiresAt: number;
 }
 
-const STORAGE_KEY = 'biblia_nj_user_session';
 const GOOGLE_VERIFIER_KEY = 'biblia_nj_google_pkce_verifier';
 const GOOGLE_CALLBACK_KEY = 'biblia_nj_google_callback_url';
 
@@ -41,10 +41,10 @@ function readSession(): StoredSession | null {
   }
 
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
+    const raw = window.localStorage.getItem(USER_SESSION_STORAGE_KEY);
     const parsed = raw ? JSON.parse(raw) as Partial<StoredSession> : null;
     if (!parsed?.accessToken || !parsed.refreshToken || !parsed.userId) {
-      window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem(USER_SESSION_STORAGE_KEY);
       return null;
     }
     return parsed as StoredSession;
@@ -130,10 +130,11 @@ export function UserAccessHub({ onGoBack, onGoHome, onOpenReader, onOpenSearch, 
     }
 
     if (session) {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(session));
+      window.localStorage.setItem(USER_SESSION_STORAGE_KEY, JSON.stringify(session));
     } else {
-      window.localStorage.removeItem(STORAGE_KEY);
+      window.localStorage.removeItem(USER_SESSION_STORAGE_KEY);
     }
+    window.dispatchEvent(new Event(AUTH_SESSION_CHANGED_EVENT));
   }, [session]);
 
   useEffect(() => {

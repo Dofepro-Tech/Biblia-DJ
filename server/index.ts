@@ -890,6 +890,84 @@ app.put('/api/game-progress', async (request, response) => {
     return sendError(response, 502, 'No se pudo conectar con el progreso del juego.');
   }
 });
+
+interface BibleBookmarkPayload {
+  id: string;
+  bookAbrev: string;
+  chapter: number;
+  verseNumber?: number;
+  label: string;
+  createdAt: number;
+}
+
+function normalizeBibleBookmarks(value: unknown): BibleBookmarkPayload[] | null {
+  if (!Array.isArray(value) || value.length > 1000) return null;
+  return value.flatMap((entry) => {
+    if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return [];
+    const bookmark = entry as Partial<BibleBookmarkPayload>;
+    if (
+      typeof bookmark.id !== 'string' || !bookmark.id || bookmark.id.length > 80
+      || typeof bookmark.bookAbrev !== 'string' || !/^[A-Za-z0-9]{1,12}$/.test(bookmark.bookAbrev)
+      || typeof bookmark.chapter !== 'number' || !Number.isInteger(bookmark.chapter) || bookmark.chapter < 1 || bookmark.chapter > 200
+      || (bookmark.verseNumber !== undefined && (typeof bookmark.verseNumber !== 'number' || !Number.isInteger(bookmark.verseNumber) || bookmark.verseNumber < 1 || bookmark.verseNumber > 200))
+      || typeof bookmark.label !== 'string' || bookmark.label.length > 200
+      || typeof bookmark.createdAt !== 'number' || !Number.isFinite(bookmark.createdAt) || bookmark.createdAt < 0
+    ) return [];
+    return [{
+      id: bookmark.id,
+      bookAbrev: bookmark.bookAbrev,
+      chapter: bookmark.chapter,
+      verseNumber: bookmark.verseNumber,
+      label: bookmark.label,
+      createdAt: bookmark.createdAt,
+    }];
+  });
+}
+
+app.get('/api/user-favorites', async (request, response) => {
+  const accessToken = getAccessToken(request);
+  if (!supabaseAuthUrl || !supabaseAnonKey) return sendError(response, 503, 'Los favoritos de perfil no están configurados.');
+  const userId = await getAuthenticatedUserId(accessToken);
+  if (!userId) return sendError(response, 401, 'Tu sesión expiró. Inicia sesión de nuevo para sincronizar tus favoritos.');
+  try {
+    const result = await fetch(`${supabaseAuthUrl}/rest/v1/user_bible_bookmarks?user_id=eq.${encodeURIComponent(userId)}&select=bookmarks&limit=1`, {
+      headers: { apikey: supabaseAnonKey, Authorization: `Bearer ${accessToken}` },
+    });
+    const payload = await result.json().catch(() => []);
+    if (!result.ok) return sendError(response, 502, 'No se pudieron cargar tus favoritos de perfil.');
+    const row = Array.isArray(payload) ? payload[0] : undefined;
+    const bookmarks = row ? normalizeBibleBookmarks(row.bookmarks) : null;
+    if (row && bookmarks === null) return sendError(response, 502, 'Los favoritos guardados tienen un formato no válido.');
+    return response.json({ bookmarks });
+  } catch {
+    return sendError(response, 502, 'No se pudo conectar con tus favoritos de perfil.');
+  }
+});
+
+app.put('/api/user-favorites', async (request, response) => {
+  const accessToken = getAccessToken(request);
+  const bookmarks = normalizeBibleBookmarks(request.body?.bookmarks);
+  if (!supabaseAuthUrl || !supabaseAnonKey) return sendError(response, 503, 'Los favoritos de perfil no están configurados.');
+  const userId = await getAuthenticatedUserId(accessToken);
+  if (!userId) return sendError(response, 401, 'Tu sesión expiró. Inicia sesión de nuevo para sincronizar tus favoritos.');
+  if (!bookmarks) return sendError(response, 400, 'La lista de favoritos no es válida.');
+  try {
+    const result = await fetch(`${supabaseAuthUrl}/rest/v1/user_bible_bookmarks?on_conflict=user_id`, {
+      method: 'POST',
+      headers: {
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates,return=representation',
+      },
+      body: JSON.stringify({ user_id: userId, bookmarks, updated_at: new Date().toISOString() }),
+    });
+    if (!result.ok) return sendError(response, 502, 'No se pudieron guardar tus favoritos de perfil.');
+    return response.json({ bookmarks });
+  } catch {
+    return sendError(response, 502, 'No se pudo conectar con tus favoritos de perfil.');
+  }
+});
 const opinionsSupabaseUrl = process.env.OPINIONS_SUPABASE_URL;
 const opinionsSupabaseKey = process.env.OPINIONS_SUPABASE_SECRET_KEY || process.env.OPINIONS_SUPABASE_SERVICE_ROLE_KEY;
 

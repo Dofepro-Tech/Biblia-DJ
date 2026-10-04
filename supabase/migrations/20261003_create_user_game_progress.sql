@@ -6,14 +6,17 @@ create table if not exists public.user_game_progress (
 
 alter table public.user_game_progress enable row level security;
 
+drop policy if exists "Users can read their own game progress" on public.user_game_progress;
 create policy "Users can read their own game progress"
   on public.user_game_progress for select to authenticated
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can create their own game progress" on public.user_game_progress;
 create policy "Users can create their own game progress"
   on public.user_game_progress for insert to authenticated
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can update their own game progress" on public.user_game_progress;
 create policy "Users can update their own game progress"
   on public.user_game_progress for update to authenticated
   using (auth.uid() = user_id)

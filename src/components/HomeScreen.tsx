@@ -633,8 +633,8 @@ export function HomeScreen(props: HomeScreenProps) {
             </section>
           )}
 
-          <div className="grid gap-6 lg:grid-cols-[1fr_350px]">
-            <div className="space-y-6">
+          <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_350px]">
+            <div className="min-w-0 space-y-6">
               {/* DEVOCIONAL MOVIL */}
               {homeSections.devotional && (
                 <section className="rounded-[28px] border border-white/10 bg-[#111820] p-4 text-white shadow-xl">
@@ -673,8 +673,8 @@ export function HomeScreen(props: HomeScreenProps) {
                       <h3 className={cn('text-xl font-bold', isDarkMode ? 'text-white' : 'text-[#102542]')}>{section.title}</h3>
                       <ChevronRight className={cn('h-5 w-5', isDarkMode ? 'text-white/30' : 'text-slate-400')} />
                     </div>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                       {section.items.slice(0, 4).map(r => renderCompanionCard(section.kind, section.label, r, false))}
+                      <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-2 no-scrollbar sm:mx-0 sm:grid sm:grid-cols-2 sm:gap-4 sm:overflow-visible sm:px-0 sm:pb-0">
+                        {section.items.slice(0, 4).map(r => renderCompanionCard(section.kind, section.label, r, true))}
                     </div>
                   </section>
                 );
@@ -775,7 +775,7 @@ function DailyCompanionCard({ kind, label, resource, isDarkMode, onClick, compac
     ? new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(new Date(resource.publishedAt))
     : null;
   return (
-    <button type="button" onClick={onClick} className={cn('group overflow-hidden rounded-[26px] border text-left transition-all', getDailyCompanionTone(kind, isDarkMode), compact ? 'w-[21.75rem] flex-shrink-0 p-3.5' : 'w-full p-4')}>
+    <button type="button" onClick={onClick} className={cn('group overflow-hidden rounded-[26px] border text-left transition-all', getDailyCompanionTone(kind, isDarkMode), compact ? 'w-[min(86vw,22rem)] shrink-0 snap-start p-3.5 sm:w-full sm:min-w-0' : 'w-full p-4')}>
       <div className={cn('relative overflow-hidden rounded-[22px] aspect-[16/10] bg-black/20')}>
         {resource.imageUrl && <img src={resource.imageUrl} className="h-full w-full object-cover" loading="lazy" alt="" />}
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
@@ -788,7 +788,7 @@ function DailyCompanionCard({ kind, label, resource, isDarkMode, onClick, compac
 
 function DailyImageCard({ label, resource, currentLanguage, isDarkMode, isSaved, onToggleSaved, onOpenImage, onOpenVerse, onShare, compact = false }: any) {
   return (
-    <article className={cn('group overflow-hidden rounded-[24px] border p-4', isDarkMode ? 'border-white/10 bg-white/5' : 'border-[#d5e4f3] bg-white')}>
+    <article className={cn('group overflow-hidden rounded-[24px] border', compact ? 'w-[min(86vw,22rem)] shrink-0 snap-start p-3.5 sm:w-full sm:min-w-0' : 'w-full p-4', isDarkMode ? 'border-white/10 bg-white/5' : 'border-[#d5e4f3] bg-white')}>
       <div className="relative overflow-hidden rounded-[20px] aspect-[16/10] cursor-pointer" onClick={onOpenImage}>
         {resource.imageUrl && <img src={resource.imageUrl} className="h-full w-full object-cover" alt="" />}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
