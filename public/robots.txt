@@ -1,4 +1,12 @@
+User-agent: Google-InspectionTool
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+Disallow: /api/
+
 User-agent: *
+Allow: /
 Disallow: /api/
 
 Sitemap: https://bibliadj.dofepro.do/sitemap.xml
