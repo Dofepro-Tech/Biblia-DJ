@@ -1,0 +1,13 @@
+{
+  "build": {
+    "env": {
+      "VITE_USE_SAME_ORIGIN_API": "true"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "https://biblia-dj.onrender.com/api/:path*"
+    }
+  ]
+}
