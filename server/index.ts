@@ -1101,6 +1101,26 @@ app.post('/api/stats/event', handleStatsEvent);
 
 if (existsSync(distIndexPath)) {
   const distPath = path.resolve(projectRoot, 'dist');
+  const publicPath = path.resolve(projectRoot, 'public');
+
+  // Serve sitemap.xml and robots.txt from public/
+  app.get('/sitemap.xml', (request, response) => {
+    const sitemapPath = path.join(publicPath, 'sitemap.xml');
+    if (existsSync(sitemapPath)) {
+      response.sendFile(sitemapPath);
+    } else {
+      response.status(404).end();
+    }
+  });
+
+  app.get('/robots.txt', (request, response) => {
+    const robotsPath = path.join(publicPath, 'robots.txt');
+    if (existsSync(robotsPath)) {
+      response.sendFile(robotsPath);
+    } else {
+      response.status(404).end();
+    }
+  });
 
   app.use(express.static(distPath, {
     index: false,
