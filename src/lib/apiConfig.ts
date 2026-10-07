@@ -8,7 +8,8 @@ const DEFAULT_PUBLIC_API_BASE_URL = 'https://biblia-dj.onrender.com';
 
 export function getConfiguredApiBaseUrl() {
   const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();
-  const fallbackBaseUrl = import.meta.env.PROD ? DEFAULT_PUBLIC_API_BASE_URL : undefined;
+  // Only use fallback if not using same-origin API
+  const fallbackBaseUrl = shouldUseSameOriginApi() ? undefined : (import.meta.env.PROD ? DEFAULT_PUBLIC_API_BASE_URL : undefined);
   const resolvedBaseUrl = configuredBaseUrl || fallbackBaseUrl;
   return resolvedBaseUrl ? sanitizeBaseUrl(resolvedBaseUrl) : undefined;
 }
