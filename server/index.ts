@@ -618,7 +618,7 @@ const handleHealth: RequestHandler = (_request, response) => {
     timestamp: new Date().toISOString(),
     startedAt: serverStartedAt,
     deploymentMode: existsSync(distIndexPath) ? 'fullstack' : 'api-only',
-    appUrl: process.env.APP_URL || null,
+    appUrl: (process.env.APP_URL || '').split(',').pop().trim() || null,
     ai: {
       provider,
       configured: isAiProviderConfigured(provider),
@@ -1105,7 +1105,7 @@ if (existsSync(distIndexPath)) {
 
   // Generate dynamic sitemap with all Bible books
   app.get('/sitemap.xml', (request, response) => {
-    const appUrl = process.env.APP_URL || 'https://bibliadj.dofepro.do';
+    const appUrl = (process.env.APP_URL || 'https://bibliadj.dofepro.do').split(',').pop().trim();
     const baseUrl = appUrl.replace(/\/$/, '');
 
     const sitemapUrls = [
