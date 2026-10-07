@@ -1103,14 +1103,39 @@ if (existsSync(distIndexPath)) {
   const distPath = path.resolve(projectRoot, 'dist');
   const publicPath = path.resolve(projectRoot, 'public');
 
-  // Serve sitemap.xml and robots.txt from public/
+  // Generate dynamic sitemap with all Bible books
   app.get('/sitemap.xml', (request, response) => {
-    const sitemapPath = path.join(publicPath, 'sitemap.xml');
-    if (existsSync(sitemapPath)) {
-      response.sendFile(sitemapPath);
-    } else {
-      response.status(404).end();
-    }
+    const appUrl = process.env.APP_URL || 'https://bibliadj.dofepro.do';
+    const baseUrl = appUrl.replace(/\/$/, '');
+
+    const sitemapUrls = [
+      { loc: `${baseUrl}/`, priority: '1.0', changefreq: 'daily' },
+      { loc: `${baseUrl}/download.html`, priority: '0.8', changefreq: 'weekly' },
+    ];
+
+    // Add all Bible books
+    FALLBACK_BIBLE_BOOKS.forEach((book) => {
+      const bookName = book.names[0];
+      sitemapUrls.push({
+        loc: `${baseUrl}/?book=${encodeURIComponent(bookName)}`,
+        priority: '0.7',
+        changefreq: 'weekly',
+      });
+    });
+
+    const sitemapXml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${sitemapUrls.map((url) => `  <url>
+    <loc>${url.loc}</loc>
+    <lastmod>2026-10-07</lastmod>
+    <changefreq>${url.changefreq}</changefreq>
+    <priority>${url.priority}</priority>
+  </url>`).join('\n')}
+</urlset>`;
+
+    response.setHeader('Content-Type', 'application/xml');
+    response.setHeader('Cache-Control', 'public, max-age=3600');
+    response.send(sitemapXml);
   });
 
   app.get('/robots.txt', (request, response) => {
