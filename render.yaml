@@ -23,7 +23,7 @@ services:
       - key: OPENROUTER_MODEL
         value: openai/gpt-4o-mini
       - key: OPENROUTER_APP_NAME
-        value: Biblia DJ
+        value: Biblia NG
       - key: OPENROUTER_API_KEY
         sync: false
       - key: BIBLE_API_KEY
