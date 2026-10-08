@@ -160,7 +160,11 @@ export async function searchBible(query: string, language: string, limit: number
   const spanishBibleId = process.env.BIBLE_API_ES_BIBLE_ID;
   if (normalizedLanguage === 'es' && apiKey && spanishBibleId) {
     try {
-      return await searchApiBibleRvr1960(trimmedQuery, apiKey, spanishBibleId, safeLimit, safeOffset);
+      const result = await Promise.race([
+        searchApiBibleRvr1960(trimmedQuery, apiKey, spanishBibleId, safeLimit, safeOffset),
+        new Promise<never>((_, reject) => setTimeout(() => reject(new Error('API search timeout')), 10000))
+      ]);
+      return result;
     } catch (error) {
       console.warn('API.Bible search failed; falling back to the bundled-source scan.', error);
     }
@@ -170,64 +174,76 @@ export async function searchBible(query: string, language: string, limit: number
 
   if (!searchCache.has(cacheKey)) {
     const searchPromise = (async () => {
-    const books = await fetchBooks();
-    const searchJobs = books.flatMap((book, bookIndex) => {
-      return Array.from({ length: book.chapters }, (_, chapterOffset) => ({
-        book,
-        bookIndex,
-        chapter: chapterOffset + 1,
-      }));
-    });
+    try {
+      const books = await fetchBooks();
+      const searchJobs = books.flatMap((book, bookIndex) => {
+        return Array.from({ length: book.chapters }, (_, chapterOffset) => ({
+          book,
+          bookIndex,
+          chapter: chapterOffset + 1,
+        }));
+      });
 
-    const collectedResults: Array<BibleSearchResult & { bookIndex: number }> = [];
-    let totalMatches = 0;
-    let failedChapters = 0;
+      const collectedResults: Array<BibleSearchResult & { bookIndex: number }> = [];
+      let totalMatches = 0;
+      let failedChapters = 0;
 
-    await runWithConcurrency(searchJobs, CHAPTER_CONCURRENCY, async ({ book, bookIndex, chapter }) => {
-      let chapterData: ChapterData;
-      try {
-        chapterData = await fetchChapter(book.names[0], chapter, normalizedLanguage);
-      } catch (error) {
-        failedChapters += 1;
-        console.warn(`Skipping unavailable chapter during Bible search: ${book.names[0]} ${chapter}`, error);
-        return;
-      }
-
-      for (const verse of chapterData.vers) {
-        if (!normalizeSearchText(verse.verse).includes(normalizedQuery)) {
-          continue;
+      await runWithConcurrency(searchJobs, CHAPTER_CONCURRENCY, async ({ book, bookIndex, chapter }) => {
+        let chapterData: ChapterData;
+        try {
+          chapterData = await Promise.race([
+            fetchChapter(book.names[0], chapter, normalizedLanguage),
+            new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Chapter fetch timeout')), 5000))
+          ]);
+        } catch (error) {
+          failedChapters += 1;
+          console.warn(`Skipping unavailable chapter during Bible search: ${book.names[0]} ${chapter}`, error);
+          return;
         }
 
-        totalMatches += 1;
+        for (const verse of chapterData.vers) {
+          if (!normalizeSearchText(verse.verse).includes(normalizedQuery)) {
+            continue;
+          }
 
-        collectedResults.push({
-          id: `${book.abrev}-${chapter}-${verse.number}`,
-          bookAbrev: book.abrev,
-          bookName: chapterData.name || book.names[0],
-          chapter,
-          verseNumber: verse.number,
-          verseText: verse.verse,
-          bookIndex,
-        });
-      }
-    });
+          totalMatches += 1;
 
-    collectedResults.sort((left, right) => {
-      return left.bookIndex - right.bookIndex || left.chapter - right.chapter || left.verseNumber - right.verseNumber;
-    });
+          collectedResults.push({
+            id: `${book.abrev}-${chapter}-${verse.number}`,
+            bookAbrev: book.abrev,
+            bookName: chapterData.name || book.names[0],
+            chapter,
+            verseNumber: verse.number,
+            verseText: verse.verse,
+            bookIndex,
+          });
+        }
+      });
 
-    return {
-      query: trimmedQuery,
-      total: totalMatches,
-      truncated: false,
-      version: normalizedLanguage === 'es' ? 'RVR1909' : 'KJV',
-      incomplete: failedChapters > 0,
-      results: collectedResults.map(({ bookIndex: _bookIndex, ...result }) => result),
-    } satisfies BibleSearchResponse;
-    })().catch((error) => {
-      searchCache.delete(cacheKey);
-      throw error;
-    });
+      collectedResults.sort((left, right) => {
+        return left.bookIndex - right.bookIndex || left.chapter - right.chapter || left.verseNumber - right.verseNumber;
+      });
+
+      return {
+        query: trimmedQuery,
+        total: totalMatches,
+        truncated: false,
+        version: normalizedLanguage === 'es' ? 'RVR1909' : 'KJV',
+        incomplete: failedChapters > 0,
+        results: collectedResults.map(({ bookIndex: _bookIndex, ...result }) => result),
+      } satisfies BibleSearchResponse;
+    } catch (error) {
+      console.error('Bible search fallback failed:', error);
+      // Return empty results instead of throwing
+      return {
+        query: trimmedQuery,
+        total: 0,
+        results: [],
+        truncated: false,
+        incomplete: true,
+      };
+    }
+    })();
 
     searchCache.set(cacheKey, searchPromise);
   }
