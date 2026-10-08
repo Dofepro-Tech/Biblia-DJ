@@ -5,6 +5,47 @@ import { FALLBACK_BIBLE_BOOKS } from '@/src/lib/fallbackBooks';
 import { getBibleVersion, normalizeAppLanguage } from '@/src/lib/language';
 
 const BASE_URL = 'https://bible-api.deno.dev/api';
+const CACHE_PREFIX = 'biblia-ng-chapter-cache:';
+const CACHE_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+
+function getCacheKey(bookName: string, chapter: number, lang: string): string {
+  return `${CACHE_PREFIX}${bookName}-${chapter}-${lang}`;
+}
+
+function getCachedChapter(bookName: string, chapter: number, lang: string): ChapterData | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const key = getCacheKey(bookName, chapter, lang);
+    const cached = window.localStorage.getItem(key);
+    if (!cached) return null;
+    
+    const { data, timestamp } = JSON.parse(cached);
+    const age = Date.now() - timestamp;
+    
+    if (age > CACHE_EXPIRY_MS) {
+      window.localStorage.removeItem(key);
+      return null;
+    }
+    
+    return data;
+  } catch {
+    return null;
+  }
+}
+
+function setCachedChapter(bookName: string, chapter: number, lang: string, data: ChapterData): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const key = getCacheKey(bookName, chapter, lang);
+    const cacheEntry = {
+      data,
+      timestamp: Date.now(),
+    };
+    window.localStorage.setItem(key, JSON.stringify(cacheEntry));
+  } catch {
+    // Ignore storage errors (quota exceeded, etc.)
+  }
+}
 
 interface ParsedBibleReference {
   book: Book;
@@ -159,6 +200,12 @@ export async function fetchBooks(): Promise<Book[]> {
  * @returns 
  */
 export async function fetchChapter(bookName: string, chapter: number, lang: string = 'es'): Promise<ChapterData> {
+  // Try cache first (works offline)
+  const cached = getCachedChapter(bookName, chapter, lang);
+  if (cached) {
+    return cached;
+  }
+
   const version = getBibleVersion(lang);
   const query = new URLSearchParams({
     book: bookName,
@@ -168,9 +215,24 @@ export async function fetchChapter(bookName: string, chapter: number, lang: stri
   const chapterUrl = canUseConfiguredApi()
     ? `${resolveConfiguredApiUrl('/api/bible/read')}?${query.toString()}`
     : `${BASE_URL}/read/${version}/${encodeURIComponent(bookName)}/${chapter}`;
-  const res = await fetch(chapterUrl);
-  if (!res.ok) throw new Error('Failed to fetch chapter');
-  return res.json();
+  
+  try {
+    const res = await fetch(chapterUrl);
+    if (!res.ok) throw new Error('Failed to fetch chapter');
+    const data = await res.json();
+    
+    // Cache the response
+    setCachedChapter(bookName, chapter, lang, data);
+    
+    return data;
+  } catch (error) {
+    // If fetch fails and we have cached data, return it (stale cache)
+    const staleCached = getCachedChapter(bookName, chapter, lang);
+    if (staleCached) {
+      return staleCached;
+    }
+    throw error;
+  }
 }
 
 export async function searchBible(query: string, lang: string = 'es', limit: number = 60, offset = 0): Promise<BibleSearchResponse> {
