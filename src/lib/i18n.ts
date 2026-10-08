@@ -6,8 +6,8 @@ const resources = {
   en: {
     translation: {
       "app": {
-        "title": "Bible DJ",
-        "welcome": "Welcome to Bible DJ",
+        "title": "Bible NG",
+        "welcome": "Welcome to Bible NG",
         "description": "Your sacred space for reading and reflection. Start by searching for a book above or select one from the sidebar.",
         "search_book": "Search book or word...",
         "search_results": "No results found",
@@ -113,7 +113,7 @@ const resources = {
         "values": "Values",
         "terms": "Terms & Conditions",
         "privacy": "Privacy Policy",
-        "about": "About Bible NJ",
+        "about": "About Bible NG",
         "more_options": "More Options",
         "settings": "Personalization",
         "dark_mode": "Dark Mode",
@@ -139,7 +139,7 @@ const resources = {
         "menu_hint": "Use the left menu to switch between Home, Books, Testaments, Favorites, Daily Challenges, Guided Study, and the Bible game panel."
       },
       "splash": {
-        "badge": "Opening Bible NJ",
+        "badge": "Opening Bible NG",
         "loading": "Preparing your home screen, your books, and your main reading with a clean start."
       },
       "settings": {
@@ -224,11 +224,11 @@ const resources = {
         "remove": "Remove"
       },
       "about": {
-        "title": "Bible NJ",
+        "title": "Bible NG",
         "subtitle": "Guiding your path toward salvation",
         "mission_body": "Provide accessible and trustworthy tools that bring every person closer to the Holy Scriptures, encouraging daily reading, thoughtful study, and a life transformed by the Word of God.",
         "vision_body": "Become a digital reference for Christian growth, where Bible reading, guided learning, and practical resources help people strengthen their faith with clarity, order, and purpose.",
-        "values_body": "Values that guide each decision, every feature, and every interaction inside Bible NJ.",
+        "values_body": "Values that guide each decision, every feature, and every interaction inside Bible NG.",
         "values_items": [
           {
             "title": "Love",
@@ -272,7 +272,7 @@ const resources = {
         "title": "Bible Game",
         "subtitle": "Interactive mode",
         "headline": "Bible word search",
-        "description": "Enjoy a light Bible word-search space with words about faith, grace, peace, and prayer inside Bible NJ.",
+        "description": "Enjoy a light Bible word-search space with words about faith, grace, peace, and prayer inside Bible NG.",
         "integration_ready": "Now on screen",
         "panel_title": "Word-search board",
         "panel_body_embedded": "The game is already loaded inside the app and ready to play.",
@@ -303,7 +303,7 @@ const resources = {
         "level_complete_body": "You completed level {{level}} and added {{reward}} points to your progress."
       },
       "share_sheet": {
-        "title": "Share Bible NJ",
+        "title": "Share Bible NG",
         "subtitle": "Choose where you want to send this app and keep reading together.",
         "share_title": "Share image",
         "share_subtitle": "Pick a social network, more apps, or save the image.",
@@ -324,8 +324,8 @@ const resources = {
   es: {
     translation: {
       "app": {
-        "title": "Bíblia DJ",
-        "welcome": "Bienvenido a Bíblia DJ",
+        "title": "Bíblia NG",
+        "welcome": "Bienvenido a Bíblia NG",
         "description": "Tu espacio sagrado de lectura y reflexión. Comienza buscando un libro arriba o selecciona uno del menú lateral.",
         "search_book": "Buscar libro o palabra...",
         "search_results": "No se encontraron resultados",
