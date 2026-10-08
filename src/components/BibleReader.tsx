@@ -87,6 +87,8 @@ export function BibleReader(props: BibleReaderProps) {
   const [welcomeTempChapter, setWelcomeTempChapter] = useState(1);
   const [welcomeVersesCount, setWelcomeVersesCount] = useState(0);
   const [isWelcomeVersesLoading, setIsWelcomeVersesLoading] = useState(false);
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
+  const [selectedVerses, setSelectedVerses] = useState<Verse[]>([]);
   const mainScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -214,6 +216,61 @@ export function BibleReader(props: BibleReaderProps) {
     onNavigateToVerse(welcomeTempBook.abrev, welcomeTempChapter, verseNumber);
     setShowWelcomeBookPicker(false);
     setWelcomePickerStep('books');
+  };
+
+  const toggleMultiSelectMode = () => {
+    setIsMultiSelectMode(!isMultiSelectMode);
+    setSelectedVerses([]);
+    if (!isMultiSelectMode && selectedVerse) {
+      props.onClearSelectedVerse?.();
+    }
+  };
+
+  const handleVerseClick = (verse: Verse) => {
+    if (isMultiSelectMode) {
+      setSelectedVerses(prev => {
+        const isSelected = prev.some(v => v.id === verse.id);
+        if (isSelected) {
+          return prev.filter(v => v.id !== verse.id);
+        } else {
+          return [...prev, verse];
+        }
+      });
+    } else {
+      onSelectVerse(verse);
+    }
+  };
+
+  const clearMultiSelection = () => {
+    setSelectedVerses([]);
+  };
+
+  const copySelectedVerses = () => {
+    if (selectedVerses.length === 0) return;
+    const text = selectedVerses
+      .map(v => `${v.number}. ${v.verse}`)
+      .join('\n');
+    navigator.clipboard.writeText(text);
+    clearMultiSelection();
+    setIsMultiSelectMode(false);
+  };
+
+  const shareSelectedVerses = () => {
+    if (selectedVerses.length === 0) return;
+    const text = selectedVerses
+      .map(v => `${v.number}. ${v.verse}`)
+      .join('\n');
+    const shareData = {
+      title: `${chapterData?.name} ${chapterData?.chapter}`,
+      text: text,
+    };
+    if (props.onShareContent) {
+      props.onShareContent(shareData);
+    } else if (navigator.share) {
+      navigator.share(shareData);
+    }
+    clearMultiSelection();
+    setIsMultiSelectMode(false);
   };
 
   const WebNavItem = ({ label, onClick, active }: { label: string, onClick?: () => void, active?: boolean }) => (
@@ -370,15 +427,40 @@ export function BibleReader(props: BibleReaderProps) {
               <BookOpen className="h-4 w-4 shrink-0 text-[#8bc2ff]" />
               <span className="truncate">{chapterData.name} {chapterData.chapter}{selectedVerse ? `:${selectedVerse.number}` : ''}</span>
             </div>
-            {selectedVerse && (
+            {isMultiSelectMode ? (
               <>
-                <button type="button" onClick={() => playVerse(selectedVerse)} className={cn('inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-3 text-xs font-bold transition-colors', isPlayingVerseNumber === selectedVerse.number ? 'bg-[var(--primary)] text-white' : 'bg-white/10 text-white hover:bg-white/15')}>
-                  {isPlayingVerseNumber === selectedVerse.number ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
-                  <span>{isPlayingVerseNumber === selectedVerse.number ? t('audio.stop') : (currentLanguage.startsWith('en') ? 'Verse' : 'Versículo')}</span>
-                </button>
-                <button type="button" onClick={() => props.onClearSelectedVerse?.()} className="shrink-0 rounded-full p-2 text-white/65 transition-colors hover:bg-white/10 hover:text-white" title={t('app.close_verse_actions')} aria-label={t('app.close_verse_actions')}>
+                <button type="button" onClick={toggleMultiSelectMode} className="shrink-0 rounded-full p-2 text-white/65 transition-colors hover:bg-white/10 hover:text-white" title={currentLanguage.startsWith('en') ? 'Exit multi-select' : 'Salir de selección múltiple'}>
                   <X className="h-4 w-4" />
                 </button>
+                {selectedVerses.length > 0 && (
+                  <>
+                    <button type="button" onClick={copySelectedVerses} className="shrink-0 rounded-full p-2 text-white/65 transition-colors hover:bg-white/10 hover:text-white" title={currentLanguage.startsWith('en') ? 'Copy selected' : 'Copiar seleccionados'}>
+                      <Copy className="h-4 w-4" />
+                    </button>
+                    <button type="button" onClick={shareSelectedVerses} className="shrink-0 rounded-full p-2 text-white/65 transition-colors hover:bg-white/10 hover:text-white" title={currentLanguage.startsWith('en') ? 'Share selected' : 'Compartir seleccionados'}>
+                      <Share2 className="h-4 w-4" />
+                    </button>
+                  </>
+                )}
+                <span className="text-[10px] font-bold text-white/80">{selectedVerses.length} {currentLanguage.startsWith('en') ? 'selected' : 'seleccionados'}</span>
+              </>
+            ) : (
+              <>
+                <button type="button" onClick={toggleMultiSelectMode} className={cn('inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-3 text-xs font-bold transition-colors', 'bg-white/10 text-white hover:bg-white/15')} title={currentLanguage.startsWith('en') ? 'Multi-select verses' : 'Seleccionar múltiples versículos'}>
+                  <input type="checkbox" checked={false} readOnly className="pointer-events-none mr-1" />
+                  <span>{currentLanguage.startsWith('en') ? 'Select' : 'Seleccionar'}</span>
+                </button>
+                {selectedVerse && (
+                  <>
+                    <button type="button" onClick={() => playVerse(selectedVerse)} className={cn('inline-flex h-10 shrink-0 items-center gap-2 rounded-full px-3 text-xs font-bold transition-colors', isPlayingVerseNumber === selectedVerse.number ? 'bg-[var(--primary)] text-white' : 'bg-white/10 text-white hover:bg-white/15')}>
+                      {isPlayingVerseNumber === selectedVerse.number ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                      <span>{isPlayingVerseNumber === selectedVerse.number ? t('audio.stop') : (currentLanguage.startsWith('en') ? 'Verse' : 'Versículo')}</span>
+                    </button>
+                    <button type="button" onClick={() => props.onClearSelectedVerse?.()} className="shrink-0 rounded-full p-2 text-white/65 transition-colors hover:bg-white/10 hover:text-white" title={t('app.close_verse_actions')} aria-label={t('app.close_verse_actions')}>
+                      <X className="h-4 w-4" />
+                    </button>
+                  </>
+                )}
               </>
             )}
           </div>
@@ -458,10 +540,11 @@ export function BibleReader(props: BibleReaderProps) {
                   {v.study && <h3 className="mt-12 mb-6 border-l-4 border-[var(--primary)] pl-6 font-serif text-lg font-bold uppercase tracking-widest text-[var(--primary)]">{v.study}</h3>}
                    <p
                      data-verse-number={v.number}
-                     onClick={() => onSelectVerse(v)}
+                     onClick={() => handleVerseClick(v)}
                      style={{ fontSize: `${fontSize}px` }}
                      className={cn(
                       "font-serif text-xl leading-relaxed cursor-pointer p-4 rounded-3xl transition-all duration-300",
+                      isMultiSelectMode && selectedVerses.some(sv => sv.id === v.id) ? "bg-[var(--primary)]/20 ring-2 ring-[var(--primary)]/40" :
                       selectedVerse?.id === v.id ? "bg-[var(--primary)]/15 ring-2 ring-[var(--primary)]/25" : "hover:bg-[var(--primary)]/5"
                     )}
                   >
