@@ -1,10 +1,10 @@
-# Política de Privacidad de Biblia NJ
+# Política de Privacidad de Biblia NG
 
-Última actualización: 20 de abril de 2026
+Última actualización: 8 de octubre de 2026
 
 ## 1. Información general
 
-Biblia NJ es una aplicación de lectura y estudio bíblico desarrollada por Dofepro-Tech.
+Biblia NG es una aplicación de lectura y estudio bíblico desarrollada por Dofepro-Tech.
 
 Correo de contacto para soporte y privacidad:
 
@@ -77,6 +77,8 @@ Si tienes preguntas sobre privacidad, soporte o tratamiento de datos, puedes esc
 - [dofeprotech@gmail.com](mailto:dofeprotech@gmail.com)
 
 ## 9. Publicación en tiendas
+
+Esta política de privacidad está disponible en: https://bibliadj.dofepro.do/privacy.html
 
 Antes de publicar en Google Play o App Store, el desarrollador deberá:
 
