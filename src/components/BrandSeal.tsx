@@ -1,5 +1,5 @@
 import { cn } from '@/src/lib/utils';
-import logoUrl from '@/src/assets/biblia-nj-logo-ui.png';
+import logoUrl from '@/src/assets/biblia-ng-logo-ui.png';
 
 interface BrandSealProps {
   className?: string;
@@ -11,7 +11,7 @@ export function BrandSeal({ className, showWordmark = true }: BrandSealProps) {
     <div className={cn('relative aspect-square', className)}>
       <img
         src={logoUrl}
-        alt="Biblia DJ"
+        alt="Biblia NG"
         loading="lazy"
         decoding="async"
         className={cn('h-full w-full object-contain', !showWordmark && 'scale-[0.98]')}

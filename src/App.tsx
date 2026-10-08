@@ -185,7 +185,7 @@ export default function App() {
   // Versículo diario persistente por fecha
   const [startupVerse, setStartupVerse] = useState(() => {
     if (typeof window !== 'undefined') {
-      const cached = window.localStorage.getItem('biblia-dj-daily-verse-cache:' + new Date().toISOString().slice(0, 10) + ':' + currentLang);
+      const cached = window.localStorage.getItem('biblia-ng-daily-verse-cache:' + new Date().toISOString().slice(0, 10) + ':' + currentLang);
       if (cached) {
         try {
           return JSON.parse(cached);
@@ -313,7 +313,7 @@ export default function App() {
         title: shareData.title,
         text: shareData.text,
         dialogTitle: t('menu.share'),
-        fileName: 'biblia-dj-android.apk',
+        fileName: 'biblia-ng-android.apk',
       });
 
       if (apkShareResult === 'shared' || apkShareResult === 'cancelled') {

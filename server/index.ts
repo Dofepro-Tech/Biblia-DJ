@@ -614,7 +614,7 @@ const handleHealth: RequestHandler = (_request, response) => {
 
   return response.json({
     status: 'ok',
-    service: 'biblia-dj-api',
+    service: 'biblia-ng-api',
     timestamp: new Date().toISOString(),
     startedAt: serverStartedAt,
     deploymentMode: existsSync(distIndexPath) ? 'fullstack' : 'api-only',

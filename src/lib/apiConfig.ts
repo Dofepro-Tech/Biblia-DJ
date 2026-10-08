@@ -4,7 +4,7 @@ function sanitizeBaseUrl(value: string) {
   return value.replace(/\/+$/, '');
 }
 
-const DEFAULT_PUBLIC_API_BASE_URL = 'https://biblia-dj.onrender.com';
+const DEFAULT_PUBLIC_API_BASE_URL = 'https://biblia-ng.onrender.com';
 
 export function getConfiguredApiBaseUrl() {
   const configuredBaseUrl = import.meta.env.VITE_API_BASE_URL?.trim();

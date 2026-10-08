@@ -1,4 +1,4 @@
-import logoUrl from '@/src/assets/biblia-nj-logo-splash.png';
+import logoUrl from '@/src/assets/biblia-ng-logo-splash.png';
 import { motion } from 'motion/react';
 
 export function SplashScreen({ isReady = false }: { isReady?: boolean }) {
@@ -18,11 +18,11 @@ export function SplashScreen({ isReady = false }: { isReady?: boolean }) {
           <div className="splash-logo-orbit relative aspect-square w-[58vw] min-w-[160px] max-w-[280px] sm:max-w-[320px]">
             <div className="absolute inset-x-4 bottom-4 h-8 rounded-full bg-[#08163a]/35 blur-2xl" />
             <div className="splash-logo-frame absolute inset-[3%] overflow-hidden rounded-[28%] border border-white/10 shadow-[0_18px_48px_rgba(0,0,0,0.36)]">
-              <img src={logoUrl} alt="Biblia DJ" className="h-full w-full object-cover" />
+              <img src={logoUrl} alt="Biblia NG" className="h-full w-full object-cover" />
             </div>
             <span className="brand-seal-orbit splash-brand-orbit" aria-hidden="true" />
           </div>
-          <div className="w-[min(62vw,240px)]" role="progressbar" aria-label="Cargando Biblia DJ" aria-valuemin={0} aria-valuemax={100} aria-valuenow={isReady ? 100 : 78}>
+          <div className="w-[min(62vw,240px)]" role="progressbar" aria-label="Cargando Biblia NG" aria-valuemin={0} aria-valuemax={100} aria-valuenow={isReady ? 100 : 78}>
             <div className="h-1.5 overflow-hidden rounded-full bg-white/15 shadow-inner">
               <motion.div
                 initial={{ width: '8%' }}

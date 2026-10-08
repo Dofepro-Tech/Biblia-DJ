@@ -1,7 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { resolveConfiguredApiUrl } from '@/src/lib/apiConfig';
 
-const INSTALLATION_ID_KEY = 'biblia-dj-analytics-installation-id';
+const INSTALLATION_ID_KEY = 'biblia-ng-analytics-installation-id';
 
 function getInstallationId() {
   try {

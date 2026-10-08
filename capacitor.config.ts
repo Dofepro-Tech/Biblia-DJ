@@ -1,8 +1,8 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.dofepro.biblianj',
-  appName: 'Bíblia DJ',
+  appId: 'com.dofepro.bibliang',
+  appName: 'Bíblia NG',
   webDir: 'dist',
   server: {
     cleartext: false,

@@ -45,7 +45,7 @@ export function AboutLegalModal({ isOpen, onClose, type, isDarkMode }: AboutLega
       case 'about':
         return (
           <div className="space-y-4 text-left leading-relaxed">
-            <p><strong>Biblia DJ</strong> es una plataforma innovadora diseñada para transformar la experiencia de lectura y estudio de las Sagradas Escrituras a través de la tecnología moderna.</p>
+            <p><strong>Biblia NG</strong> es una plataforma innovadora diseñada para transformar la experiencia de lectura y estudio de las Sagradas Escrituras a través de la tecnología moderna.</p>
             <p>Nuestra aplicación combina el texto sagrado con herramientas de <strong>Inteligencia Artificial</strong>, juegos interactivos y recursos multimedia para que el mensaje de Dios sea más accesible, comprensible y cercano para la generación actual.</p>
             <p>Desarrollado por <strong>Dofepro-Tech</strong>, este proyecto nace del deseo de poner la mejor tecnología al servicio del Reino de Dios, permitiendo que cada usuario fortalezca su fe de manera dinámica y profunda.</p>
           </div>
@@ -68,7 +68,7 @@ export function AboutLegalModal({ isOpen, onClose, type, isDarkMode }: AboutLega
       case 'terms':
         return (
           <div className="space-y-4 text-left text-sm opacity-80 leading-relaxed">
-            <p>Al usar Biblia DJ, usted acepta cumplir con nuestros términos de servicio. Esta aplicación se proporciona para uso personal y espiritual.</p>
+            <p>Al usar Biblia NG, usted acepta cumplir con nuestros términos de servicio. Esta aplicación se proporciona para uso personal y espiritual.</p>
             <p><strong>Uso de Contenido:</strong> El contenido bíblico es de dominio público o bajo licencia. Las funciones de IA son para fines educativos y de reflexión.</p>
             <p><strong>Responsabilidad:</strong> Dofepro-Tech no se hace responsable por el uso indebido de la información generada por la IA.</p>
             <p><strong>Actualizaciones:</strong> Nos reservamos el derecho de modificar la app y estos términos para mejorar la experiencia del usuario.</p>
@@ -77,7 +77,7 @@ export function AboutLegalModal({ isOpen, onClose, type, isDarkMode }: AboutLega
       case 'privacy':
         return (
           <div className="space-y-4 text-left text-sm opacity-80 leading-relaxed">
-            <p>Su privacidad es fundamental para nosotros. Biblia DJ ha sido diseñada para ser lo más privada posible.</p>
+            <p>Su privacidad es fundamental para nosotros. Biblia NG ha sido diseñada para ser lo más privada posible.</p>
             <p><strong>Datos Locales:</strong> Sus favoritos, notas y progreso de lectura se guardan localmente en su dispositivo y no se envían a nuestros servidores.</p>
             <p><strong>Uso de IA:</strong> Al consultar a la IA, solo se envía el texto del versículo y su pregunta de forma anónima al proveedor de IA para procesar la respuesta.</p>
             <p><strong>Sin Rastreo:</strong> No vendemos sus datos ni rastreamos su comportamiento personal fuera de las estadísticas básicas de racha dentro de la app.</p>

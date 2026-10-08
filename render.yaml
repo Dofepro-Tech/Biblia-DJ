@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: biblia-dj
+    name: biblia-ng
     runtime: node
     plan: free
     autoDeploy: true
@@ -15,7 +15,7 @@ services:
       - key: VITE_APP_DOWNLOAD_URL
         value: https://bibliadj.dofepro.do/download.html
       - key: VITE_APP_APK_URL
-        value: https://dofepro-tech.github.io/biblia-dj-android.apk
+        value: https://dofepro-tech.github.io/biblia-ng-android.apk
       - key: VITE_PUBLIC_BASE_PATH
         value: /
       - key: AI_PROVIDER

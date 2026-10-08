@@ -56,7 +56,7 @@ export function getAppApkUrl() {
     return envApkUrl.trim();
   }
 
-  return 'https://dofepro-tech.github.io/biblia-dj-android.apk';
+  return 'https://dofepro-tech.github.io/biblia-ng-android.apk';
 }
 
 interface BuildAppShareMessageOptions {
@@ -167,7 +167,7 @@ export async function shareInstalledAndroidApp(options: NativeAppShareOptions): 
     await NativeAppShare.shareInstalledApk({
       title: normalizeShareField(options.title || 'Bíblia DJ'),
       text: normalizeShareField(options.text),
-      fileName: normalizeShareField(options.fileName || 'biblia-dj-android.apk'),
+      fileName: normalizeShareField(options.fileName || 'biblia-ng-android.apk'),
       dialogTitle: normalizeShareField(options.dialogTitle || 'Compartir App'),
     });
     return 'shared';
