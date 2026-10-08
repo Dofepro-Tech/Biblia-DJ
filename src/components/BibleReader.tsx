@@ -6,7 +6,8 @@ import { PanelNavButtons } from '@/src/components/PanelNavButtons';
 import { MobileBottomNav, MobilePageFooter, ScrollToTopButton } from '@/src/components/MobileBottomNav';
 import { fetchChapter } from '@/src/services/bibleApi';
 import { getSpeechLanguage } from '@/src/lib/language';
-import { BookOpen, Calendar, Download, Gamepad2, Menu, ChevronDown, ChevronLeft, ChevronRight, Sun, Moon, Palette, Trash2, MoreVertical, Heart, Info, Share2, Settings, X, Search, ArrowRight, Bookmark as BookmarkIcon, Globe, Volume2, VolumeX, Copy, House, Flame, Star, User, HelpCircle } from 'lucide-react';
+import { USER_SESSION_STORAGE_KEY } from '@/src/lib/authSession';
+import { BookOpen, Calendar, Download, Gamepad2, Menu, ChevronDown, ChevronLeft, ChevronRight, Sun, Moon, Palette, Trash2, MoreVertical, Heart, Info, Share2, Settings, X, Search, ArrowRight, Bookmark as BookmarkIcon, Globe, Volume2, VolumeX, Copy, House, Flame, Star, User, HelpCircle, LogOut } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { canUseSpeechSynthesis, cancelSpeech, getSpeechVoices, setSpeechVoicesChangedListener, speakText } from '@/src/lib/speech';
@@ -67,6 +68,24 @@ interface BibleReaderProps {
   onClearSelectedVerse?: () => void;
 }
 
+interface UserSession {
+  name: string;
+  email: string;
+  userId: string;
+  accessToken: string;
+}
+
+function readUserSession(): UserSession | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(USER_SESSION_STORAGE_KEY);
+    const session = raw ? JSON.parse(raw) as Partial<UserSession> : null;
+    return session?.name && session?.userId ? { name: session.name, email: session.email || '', userId: session.userId, accessToken: session.accessToken || '' } : null;
+  } catch {
+    return null;
+  }
+}
+
 export function BibleReader(props: BibleReaderProps) {
   const {
     isNativeApp, chapterData, isLoading, selectedVerse, onSelectVerse, onMenuClick, books, selectedBook, selectedChapter, onSelectBook, onSelectChapter,
@@ -89,6 +108,7 @@ export function BibleReader(props: BibleReaderProps) {
   const [isWelcomeVersesLoading, setIsWelcomeVersesLoading] = useState(false);
   const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const [selectedVerses, setSelectedVerses] = useState<Verse[]>([]);
+  const [userSession, setUserSession] = useState<UserSession | null>(() => readUserSession());
   const mainScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -347,7 +367,26 @@ export function BibleReader(props: BibleReaderProps) {
           </div>
           <div className="flex items-center gap-4">
              <button onClick={() => i18n.changeLanguage(currentLanguage === 'es' ? 'en' : 'es')} className="px-3 py-1.5 rounded-full border border-white/10 text-xs font-bold bg-white/5 transition-all"><Globe className="h-3.5 w-3.5 mr-2 inline" />{currentLanguage === 'es' ? 'Español' : 'English'}</button>
-             <button onClick={onOpenUser} className="px-4 py-2 rounded-full bg-[var(--primary)] text-white text-xs font-bold hover:bg-[var(--primary-hover)] transition-all">Iniciar Sesión</button>
+             {userSession ? (
+               <div className="flex items-center gap-2">
+                 <button
+                   onClick={onOpenUser}
+                   className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--primary)] text-white text-xs font-bold hover:bg-[var(--primary-hover)] transition-all"
+                 >
+                   <User className="h-4 w-4" />
+                   <span className="max-w-[100px] truncate">{userSession.name}</span>
+                 </button>
+                 <button
+                   onClick={handleLogout}
+                   className="p-2 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-all"
+                   title={currentLanguage === 'en' ? 'Logout' : 'Cerrar sesión'}
+                 >
+                   <LogOut className="h-4 w-4" />
+                 </button>
+               </div>
+             ) : (
+               <button onClick={onOpenUser} className="px-4 py-2 rounded-full bg-[var(--primary)] text-white text-xs font-bold hover:bg-[var(--primary-hover)] transition-all">Iniciar Sesión</button>
+             )}
              {!isNativeApp && !Capacitor.isNativePlatform() && <button onClick={onOpenDownloadModal} className="inline-flex items-center gap-2 rounded-full border border-[var(--primary)]/35 bg-[var(--primary)]/12 px-3 py-2 text-xs font-bold text-[var(--primary)] transition-all hover:bg-[var(--primary)]/20"><Download className="h-4 w-4" />Descargar APK</button>}
              <button onClick={onToggleDarkMode} className="theme-toggle-action p-2 rounded-xl hover:bg-white/5 transition-all" aria-label={isDarkMode ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'}>{isDarkMode ? <Sun className="h-5 w-5 text-amber-300" /> : <Moon className="h-5 w-5 text-rose-400" />}</button>
           </div>

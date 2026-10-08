@@ -17,11 +17,30 @@ import { HelpGuideModal } from '@/src/components/HelpGuideModal';
 import { VerseImageShareSheet } from '@/src/components/VerseImageShareSheet';
 import { canNativeShareVerseImage, createVerseImageAsset, downloadVerseImage, nativeShareVerseImage, revokeVerseImageAsset } from '@/src/lib/shareVerseImage';
 import { fetchChapter } from '@/src/services/bibleApi';
+import { USER_SESSION_STORAGE_KEY } from '@/src/lib/authSession';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
-import { BookHeart, BookOpen, Bookmark, Calendar, ChevronDown, ChevronLeft, ChevronRight, Download, ExternalLink, Flame, Gamepad2, Heart, House, Image, LibraryBig, Menu, Moon, Newspaper, PlayCircle, Quote, Search, Share2, Sparkles, Star, Sun, SunMoon, User, Volume2, X, HelpCircle } from 'lucide-react';
+import { BookHeart, BookOpen, Bookmark, Calendar, ChevronDown, ChevronLeft, ChevronRight, Download, ExternalLink, Flame, Gamepad2, Heart, House, Image, LibraryBig, LogOut, Menu, Moon, Newspaper, PlayCircle, Quote, Search, Share2, Sparkles, Star, Sun, SunMoon, User, Volume2, X, HelpCircle } from 'lucide-react';
 
 const SAVED_DAILY_IMAGE_STORAGE_KEY = 'biblia_nj_saved_daily_images_v1';
+
+interface UserSession {
+  name: string;
+  email: string;
+  userId: string;
+  accessToken: string;
+}
+
+function readUserSession(): UserSession | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem(USER_SESSION_STORAGE_KEY);
+    const session = raw ? JSON.parse(raw) as Partial<UserSession> : null;
+    return session?.name && session?.userId ? { name: session.name, email: session.email || '', userId: session.userId, accessToken: session.accessToken || '' } : null;
+  } catch {
+    return null;
+  }
+}
 
 function readStoredSavedDailyImages() {
   if (typeof window === 'undefined') return [] as string[];
@@ -101,6 +120,7 @@ export function HomeScreen(props: HomeScreenProps) {
   } = props;
 
   const { t, i18n } = useTranslation();
+  const [userSession, setUserSession] = useState<UserSession | null>(() => readUserSession());
   const [savedDailyImageIds, setSavedDailyImageIds] = useState<string[]>(() => readStoredSavedDailyImages());
   const [activeImageResourceId, setActiveImageResourceId] = useState<string | null>(null);
   const [activeImageVerseReference, setActiveImageVerseReference] = useState<DailyResourceCard['verseReference'] | null>(null);
@@ -136,6 +156,21 @@ export function HomeScreen(props: HomeScreenProps) {
       onOpenSearch(searchQuery.trim());
     }
   };
+
+  const handleLogout = () => {
+    window.localStorage.removeItem(USER_SESSION_STORAGE_KEY);
+    setUserSession(null);
+    window.location.reload();
+  };
+
+  useEffect(() => {
+    const handleSessionChange = () => {
+      setUserSession(readUserSession());
+    };
+    window.addEventListener('storage', handleSessionChange);
+    return () => window.removeEventListener('storage', handleSessionChange);
+  }, []);
+
   const currentLanguage = normalizeAppLanguage(i18n.resolvedLanguage || i18n.language);
 
   const oldTestamentCount = books.filter(b => b.testament.toLowerCase().includes('antiguo') || b.testament.toLowerCase().includes('old')).length;
@@ -525,13 +560,32 @@ export function HomeScreen(props: HomeScreenProps) {
             <div className="flex items-center gap-2 xl:gap-4 shrink-0">
               <WebNavItem label={currentLanguage === 'en' ? 'Opinions' : 'Opiniones'} onClick={onOpenOpinions ?? (() => {})} isDarkMode={isDarkMode} />
 
-              <button
-                onClick={onOpenUser}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--primary)] text-white text-xs font-bold hover:bg-[var(--primary-hover)] transition-all shadow-lg shadow-blue-500/20"
-              >
-                <User className="h-4 w-4" />
-                <span>Iniciar Sesión</span>
-              </button>
+              {userSession ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={onOpenUser}
+                    className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--primary)] text-white text-xs font-bold hover:bg-[var(--primary-hover)] transition-all shadow-lg shadow-blue-500/20"
+                  >
+                    <User className="h-4 w-4" />
+                    <span className="max-w-[100px] truncate">{userSession.name}</span>
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="p-2 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-all"
+                    title={currentLanguage === 'en' ? 'Logout' : 'Cerrar sesión'}
+                  >
+                    <LogOut className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={onOpenUser}
+                  className="flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--primary)] text-white text-xs font-bold hover:bg-[var(--primary-hover)] transition-all shadow-lg shadow-blue-500/20"
+                >
+                  <User className="h-4 w-4" />
+                  <span>Iniciar Sesión</span>
+                </button>
+              )}
 
               {!isNativeApp && !Capacitor.isNativePlatform() && (
                 <button
