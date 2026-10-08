@@ -33,7 +33,12 @@ export function canUseLocalProxyApi() {
   }
 
   const hostname = window.location.hostname.trim().toLowerCase();
-  return hostname === 'localhost' || hostname === '127.0.0.1';
+  // Accept localhost, 127.0.0.1, and local IP addresses (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+  return hostname === 'localhost' ||
+         hostname === '127.0.0.1' ||
+         /^192\.168\.\d+\.\d+$/.test(hostname) ||
+         /^10\.\d+\.\d+\.\d+$/.test(hostname) ||
+         /^172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+$/.test(hostname);
 }
 
 export function canUseConfiguredApi() {
