@@ -48,6 +48,12 @@ export function AboutLegalModal({ isOpen, onClose, type, isDarkMode }: AboutLega
             <p><strong>Biblia NG</strong> es una plataforma innovadora diseñada para transformar la experiencia de lectura y estudio de las Sagradas Escrituras a través de la tecnología moderna.</p>
             <p>Nuestra aplicación combina el texto sagrado con herramientas de <strong>Inteligencia Artificial</strong>, juegos interactivos y recursos multimedia para que el mensaje de Dios sea más accesible, comprensible y cercano para la generación actual.</p>
             <p>Desarrollado por <strong>Dofepro-Tech</strong>, este proyecto nace del deseo de poner la mejor tecnología al servicio del Reino de Dios, permitiendo que cada usuario fortalezca su fe de manera dinámica y profunda.</p>
+            <div className="mt-6 pt-4 border-t border-white/10">
+              <p className="text-sm opacity-70">
+                <strong>Versión:</strong> 1.0.16<br />
+                <strong>© 2026 Dofepro-Tech</strong>. Todos los derechos reservados.
+              </p>
+            </div>
           </div>
         );
       case 'mission': return <p className="leading-relaxed">{t('about.mission_body')}</p>;

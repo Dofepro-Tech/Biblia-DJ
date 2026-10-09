@@ -84,7 +84,7 @@ export function buildAppShareMessage({ title, message, webUrl, apkUrl, language 
   }
 
   const lines = [
-    `📖 ${title} - Bíblia DJ con Inteligencia Artificial`,
+    `📖 ${title} - Bíblia NG con Inteligencia Artificial`,
     message || 'Una increíble aplicación para leer, escuchar y estudiar la Biblia con IA.',
     '',
     `🌐 Versión Web: ${resolvedWeb}`,
@@ -165,7 +165,7 @@ export async function shareInstalledAndroidApp(options: NativeAppShareOptions): 
   // Intentamos compartir directamente el archivo .APK instalado en el celular
   try {
     await NativeAppShare.shareInstalledApk({
-      title: normalizeShareField(options.title || 'Bíblia DJ'),
+      title: normalizeShareField(options.title || 'Bíblia NG'),
       text: normalizeShareField(options.text),
       fileName: normalizeShareField(options.fileName || 'biblia-ng-android.apk'),
       dialogTitle: normalizeShareField(options.dialogTitle || 'Compartir App'),
@@ -177,10 +177,10 @@ export async function shareInstalledAndroidApp(options: NativeAppShareOptions): 
     const downloadUrl = getAppShareUrl();
     try {
       await Share.share({
-        title: options.title || 'Bíblia DJ',
+        title: options.title || 'Bíblia NG',
         text: options.text,
         url: downloadUrl,
-        dialogTitle: options.dialogTitle || 'Bíblia DJ',
+        dialogTitle: options.dialogTitle || 'Bíblia NG',
       });
       return 'shared';
     } catch (innerError) {
