@@ -1,9 +1,9 @@
 {
   "version": "1.0.16",
   "channel": "stable",
-  "publishedAt": "2026-10-09T16:19:31.720Z",
+  "publishedAt": "2026-10-09T18:15:58.639Z",
   "downloadUrl": "https://bibliadj.dofepro.do/download.html",
-  "apkUrl": "https://dofepro-tech.github.io/biblia-dj-android.apk",
+  "apkUrl": "https://dofepro-tech.github.io/biblia-ng-android.apk",
   "updateUrl": "https://bibliadj.dofepro.do/app-update.json",
   "notes": [
     "El botón Atrás de Android vuelve a la pantalla anterior y minimiza la app desde Inicio.",
