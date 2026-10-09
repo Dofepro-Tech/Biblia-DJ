@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aviso Importante - Biblia NG</title>
+    <meta name="description" content="Aviso importante sobre la actualización de Biblia NG">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0b1f4f 0%, #1a3a6e 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #ffffff;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            color: #f6c969;
+            margin-bottom: 10px;
+        }
+
+        .header .icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border-left: 4px solid #f6c969;
+        }
+
+        .section h2 {
+            color: #f6c969;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .section li {
+            padding: 8px 0;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .section li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #f6c969;
+            font-weight: bold;
+        }
+
+        .section li.warning::before {
+            content: "⚠️";
+        }
+
+        .section li.error::before {
+            content: "❌";
+        }
+
+        .steps {
+            counter-reset: step;
+        }
+
+        .steps li::before {
+            content: counter(step);
+            counter-increment: step;
+            background: #f6c969;
+            color: #0b1f4f;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .alert {
+            background: rgba(255, 107, 107, 0.2);
+            border-left-color: #ff6b6b;
+        }
+
+        .alert h2 {
+            color: #ff6b6b;
+        }
+
+        .alert li.error::before {
+            content: "❌";
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: #f6c969;
+            color: #0b1f4f;
+            padding: 15px 30px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-top: 20px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(246, 201, 105, 0.3);
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .footer a {
+            color: #f6c969;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .section {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="icon">🔔</div>
+            <h1>Aviso Importante</h1>
+            <p>Actualización de Biblia NG</p>
+        </div>
+
+        <div class="section">
+            <h2>📱 ¿Qué está pasando?</h2>
+            <p>Estimados usuarios de Biblia NG, lamentamos los inconvenientes causados por los recientes cambios. Hemos actualizado la aplicación con nuevas mejoras:</p>
+            <ul>
+                <li>Nuevo nombre de la aplicación (ahora es "Biblia NG")</li>
+                <li>Nuevo icono y branding</li>
+                <li>Selección múltiple de versículos</li>
+                <li>Funcionalidad offline mejorada</li>
+                <li>Mostrar nombre de usuario cuando está logueado</li>
+                <li>Versión y copyright en la sección "Acerca de"</li>
+            </ul>
+        </div>
+
+        <div class="section alert">
+            <h2>⚠️ Acción Requerida</h2>
+            <p>Debido a cambios técnicos en el sistema de actualización, <strong>necesita desinstalar y reinstalar</strong> la aplicación para obtener todas las nuevas funcionalidades.</p>
+            <p><strong>Pasos para actualizar:</strong></p>
+            <ul class="steps">
+                <li>Desinstalar la aplicación actual de Biblia NG</li>
+                <li>Descargar la nueva versión desde el enlace de abajo</li>
+                <li>Instalar la nueva APK</li>
+                <li>Abrir la aplicación y disfrutar de las mejoras</li>
+            </ul>
+            <a href="https://bibliadj.dofepro.do/download.html" class="cta-button">📥 Descargar Nueva Versión</a>
+        </div>
+
+        <div class="section alert">
+            <h2>😔 Pérdida de Datos</h2>
+            <p>Lamentablemente, al desinstalar la aplicación, perderá:</p>
+            <ul>
+                <li class="error">Marcadores y resaltados</li>
+                <li class="error">Progreso del juego</li>
+                <li class="error">Preferencias locales</li>
+            </ul>
+            <p style="margin-top: 15px;"><strong>Perderá estos datos solo una vez.</strong> Después de la reinstalación, todos sus datos se guardarán correctamente y no volverá a tener este problema.</p>
+        </div>
+
+        <div class="section">
+            <h2>🎯 ¿Por qué este cambio?</h2>
+            <p>Hemos cambiado el identificador interno de la aplicación (Package ID) para:</p>
+            <ul>
+                <li>Mejorar el branding de "Biblia NG"</li>
+                <li>Preparar la aplicación para Google Play Store</li>
+                <li>Asegurar que el nombre coincida con la marca</li>
+            </ul>
+            <p style="margin-top: 15px;">Este cambio es necesario para el futuro de la aplicación, pero requiere una reinstalación única.</p>
+        </div>
+
+        <div class="section">
+            <h2>🙏 Disculpas</h2>
+            <p>Lamentamos sinceramente los inconvenientes que esto causa. Entendemos que perder sus datos es frustrante, y estamos trabajando para que esto no vuelva a ocurrir.</p>
+        </div>
+
+        <div class="section">
+            <h2>💬 ¿Necesita ayuda?</h2>
+            <p>Si tiene alguna pregunta o necesita asistencia:</p>
+            <ul>
+                <li>📧 Email: <a href="mailto:dofeprotech@gmail.com" style="color: #f6c969;">dofeprotech@gmail.com</a></li>
+                <li>🌐 Web: <a href="https://bibliadj.dofepro.do" style="color: #f6c969;">https://bibliadj.dofepro.do</a></li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            <p>Gracias por su comprensión y por usar Biblia NG.</p>
+            <p><strong>Equipo de Dofepro-Tech</strong></p>
+            <p>Poniendo la mejor tecnología al servicio del Reino de Dios 🙏</p>
+        </div>
+    </div>
+</body>
+</html>
