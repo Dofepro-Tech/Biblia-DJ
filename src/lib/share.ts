@@ -56,7 +56,7 @@ export function getAppApkUrl() {
     return envApkUrl.trim();
   }
 
-  return 'https://dofepro-tech.github.io/biblia-ng-android.apk';
+  return 'https://bibliadj.dofepro.do/biblia-ng-android.apk';
 }
 
 interface BuildAppShareMessageOptions {
