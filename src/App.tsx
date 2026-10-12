@@ -158,7 +158,7 @@ export default function App() {
   useEffect(() => {
     if (!isNativePlatform) return undefined;
     const handleOAuthDeepLink = ({ url }: { url: string }) => {
-      if (!url.startsWith('com.dofepro.biblianj://auth/callback')) return;
+      if (!url.startsWith('com.dofepro.bibliang://auth/callback')) return;
       window.localStorage.setItem('biblia_nj_google_callback_url', url);
       setMainView('profile');
       window.setTimeout(() => window.dispatchEvent(new Event('biblia-google-oauth-callback')), 0);
