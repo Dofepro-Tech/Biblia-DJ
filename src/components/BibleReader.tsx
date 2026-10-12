@@ -377,8 +377,11 @@ export function BibleReader(props: BibleReaderProps) {
                    <span className="max-w-[100px] truncate">{userSession.name}</span>
                  </button>
                  <button
-                   onClick={handleLogout}
-                   className="p-2 rounded-full bg-[var(--primary)]/10 text-[var(--primary)] hover:bg-[var(--primary)]/20 transition-all"
+                   onClick={() => {
+                     try { window.localStorage.removeItem('biblia_nj_user_session'); } catch (e) {}
+                     if (onOpenUser) onOpenUser();
+                   }}
+                   className="p-2 rounded-full bg-[#1b8be0]/10 text-[#1b8be0] hover:bg-[#1b8be0]/20 transition-all"
                    title={currentLanguage === 'en' ? 'Logout' : 'Cerrar sesión'}
                  >
                    <LogOut className="h-4 w-4" />

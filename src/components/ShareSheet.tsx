@@ -54,7 +54,8 @@ export function ShareSheet({ isOpen, onClose, title, text, url }: ShareSheetProp
 
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(url);
+      const textToCopy = text && !text.includes(url) ? `${text}\n\n${url}` : (text || url);
+      await navigator.clipboard.writeText(textToCopy);
       setDidCopy(true);
     } catch (error) {
       console.error('Error copying link:', error);

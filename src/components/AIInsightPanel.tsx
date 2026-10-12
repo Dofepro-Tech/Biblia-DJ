@@ -303,7 +303,7 @@ export function AIInsightPanel({ verse, chapter, onClose, onGoHome, isFavorite =
                     value={selectedAiModel}
                     onChange={(event) => handleModelChange(event.target.value)}
                     className="w-full rounded-2xl border border-olive/15 bg-paper px-4 py-3 font-sans text-sm text-ink outline-none transition-colors focus:border-gold"
-                    size={runtimeConfig.availableModels.length > 5 ? '5' : undefined}
+                    size={runtimeConfig.availableModels.length > 5 ? 5 : undefined}
                   >
                     <option value="">{t('ai.model_selector_default', { model: runtimeConfig.currentModel })}</option>
                     {runtimeConfig.availableModels.map((model) => (
