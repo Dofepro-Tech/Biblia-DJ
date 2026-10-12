@@ -232,8 +232,12 @@ export function BibleReader(props: BibleReaderProps) {
   };
 
   const handleWelcomeVerseSelect = (verseNumber: number) => {
-    if (!welcomeTempBook || !onNavigateToVerse) return;
-    onNavigateToVerse(welcomeTempBook.abrev, welcomeTempChapter, verseNumber);
+    if (!welcomeTempBook) return;
+    onSelectBook(welcomeTempBook);
+    onSelectChapter(welcomeTempChapter);
+    if (onNavigateToVerse) {
+      onNavigateToVerse(welcomeTempBook.abrev, welcomeTempChapter, verseNumber);
+    }
     setShowWelcomeBookPicker(false);
     setWelcomePickerStep('books');
   };
