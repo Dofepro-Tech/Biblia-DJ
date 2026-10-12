@@ -1147,6 +1147,25 @@ ${sitemapUrls.map((url) => `  <url>
     }
   });
 
+  // Serve static files from public folder (APK, images, etc.)
+  app.use(express.static(publicPath, {
+    setHeaders(response, servedPath) {
+      // Cache APK files for 1 year
+      if (servedPath.endsWith('.apk')) {
+        response.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+        response.setHeader('Content-Type', 'application/vnd.android.package-archive');
+      }
+      // Cache images for 1 year
+      else if (servedPath.match(/\.(png|jpg|jpeg|gif|svg|ico)$/)) {
+        response.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      }
+      // Cache HTML files for 1 hour
+      else if (servedPath.endsWith('.html')) {
+        response.setHeader('Cache-Control', 'public, max-age=3600');
+      }
+    },
+  }));
+
   app.use(express.static(distPath, {
     index: false,
     setHeaders(response, servedPath) {
