@@ -3,18 +3,24 @@
   "channel": "stable",
   "publishedAt": "2026-10-12T16:38:50.069Z",
   "downloadUrl": "https://bibliadj.dofepro.do/download.html",
-  "apkUrl": "https://dofepro-tech.github.io/biblia-dj-android.apk",
+  "apkUrl": "https://bibliadj.dofepro.do/biblia-ng-android.apk",
   "updateUrl": "https://bibliadj.dofepro.do/app-update.json",
   "notes": [
     "El botón Atrás de Android vuelve a la pantalla anterior y minimiza la app desde Inicio.",
     "Guardar perfil confirma el nombre recibido desde el servidor y muestra el resultado.",
     "Tus favoritos y el progreso del juego se sincronizan con tu perfil.",
-    "La app carga pantallas e imágenes bajo demanda y el Devocional móvil ocupa menos espacio."
+    "La app carga pantallas e imágenes bajo demanda y el Devocional móvil ocupa menos space.",
+    "Nuevo logo con libro, espada y escudo de Biblia NG.",
+    "Mejor contraste en tarjetas de juego en tema claro.",
+    "Gemini 3.6 Flash ahora disponible como modelo de IA."
   ],
   "notesEn": [
     "Android Back now returns to the previous screen and minimizes the app from Home.",
     "Profile saving confirms the name returned by the server and shows the result.",
     "Your favorites and game progress now sync with your profile.",
-    "The app loads screens and images on demand, and the mobile devotional takes less space."
+    "The app loads screens and images on demand, and the mobile devotional takes less space.",
+    "New logo with book, sword and shield of Biblia NG.",
+    "Better contrast in game cards in light theme.",
+    "Gemini 3.6 Flash now available as AI model."
   ]
 }
