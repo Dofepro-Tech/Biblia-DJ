@@ -88,18 +88,32 @@ const OPENROUTER_MODEL_OPTIONS: AiModelOption[] = [
 
 const GEMINI_MODEL_OPTIONS: AiModelOption[] = [
   {
+    id: 'gemini-2.5-pro',
+    label: 'Gemini 2.5 Pro',
+    provider: 'gemini',
+    description: 'El modelo más avanzado para respuestas complejas y detalladas.',
+    recommendedFor: 'Estudio profundo',
+  },
+  {
+    id: 'gemini-2.5-flash',
+    label: 'Gemini 2.5 Flash',
+    provider: 'gemini',
+    description: 'Muy rápido con mejor calidad que versiones anteriores.',
+    recommendedFor: 'Uso diario',
+  },
+  {
     id: 'gemini-2.0-flash',
     label: 'Gemini 2.0 Flash',
     provider: 'gemini',
     description: 'Modelo rápido para respuestas frecuentes.',
-    recommendedFor: 'Uso diario',
+    recommendedFor: 'Chat rápido',
   },
   {
     id: 'gemini-1.5-pro',
     label: 'Gemini 1.5 Pro',
     provider: 'gemini',
     description: 'Mejor para contenido más extenso y elaborado.',
-    recommendedFor: 'Estudio profundo',
+    recommendedFor: 'Estudio clásico',
   },
 ];
 
