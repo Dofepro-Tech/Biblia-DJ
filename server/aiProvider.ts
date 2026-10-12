@@ -115,6 +115,20 @@ const GEMINI_MODEL_OPTIONS: AiModelOption[] = [
     description: 'Mejor para contenido más extenso y elaborado.',
     recommendedFor: 'Estudio clásico',
   },
+  {
+    id: 'gemini-1.5-flash',
+    label: 'Gemini 1.5 Flash',
+    provider: 'gemini',
+    description: 'Versión anterior rápida para tareas simples.',
+    recommendedFor: 'Compatibilidad',
+  },
+  {
+    id: 'gemini-3.6-flash',
+    label: 'Gemini 3.6 Flash',
+    provider: 'gemini',
+    description: 'El modelo más reciente y más rápido.',
+    recommendedFor: 'Última generación',
+  },
 ];
 
 function getConfiguredProvider(): AiProvider {
