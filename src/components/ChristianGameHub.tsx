@@ -589,10 +589,10 @@ export function ChristianGameHub({
 
             <div className="grid gap-4">
               <div className="grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(11.5rem,1fr))]">
-                <GameStatCard label={t('game.current_level')} value={String(nextLevelNumber)} icon={<Target className="h-5 w-5" />} accent="blue" />
-                <GameStatCard label={t('game.levels_unlocked')} value={String(unlockedLevelCount)} icon={<Map className="h-5 w-5" />} accent="gold" />
-                <GameStatCard label={t('game.words_found_total')} value={String(gameState.wordsFoundTotal)} icon={<Gamepad2 className="h-5 w-5" />} accent="violet" />
-                <GameStatCard label={t('game.reward_points')} value={String(gameState.rewardPoints)} icon={<Star className="h-5 w-5" />} accent="orange" />
+                <GameStatCard label={t('game.current_level')} value={String(nextLevelNumber)} icon={<Target className="h-5 w-5" />} accent="blue" isDarkMode={isDarkMode} />
+                <GameStatCard label={t('game.levels_unlocked')} value={String(unlockedLevelCount)} icon={<Map className="h-5 w-5" />} accent="gold" isDarkMode={isDarkMode} />
+                <GameStatCard label={t('game.words_found_total')} value={String(gameState.wordsFoundTotal)} icon={<Gamepad2 className="h-5 w-5" />} accent="violet" isDarkMode={isDarkMode} />
+                <GameStatCard label={t('game.reward_points')} value={String(gameState.rewardPoints)} icon={<Star className="h-5 w-5" />} accent="orange" isDarkMode={isDarkMode} />
               </div>
 
               <div className="rounded-[34px] border border-white/10 bg-[#07162b] p-6 shadow-[0_18px_60px_rgba(0,0,0,0.22)]">
@@ -746,9 +746,9 @@ export function ChristianGameHub({
                 </p>
 
                 <div className="mt-6 grid gap-3 md:grid-cols-3">
-                  <GameStatCard label={t('game.words_found')} shortLabel={currentLanguage === 'en' ? 'Words found' : 'Palabras'} value={`${foundWords.length}/${board.words.length}`} icon={<Target className="h-5 w-5" />} accent="blue" compact />
-                  <GameStatCard label={t('game.grid_size')} shortLabel={currentLanguage === 'en' ? 'Board size' : 'Tablero'} value={`${board.grid.length}x${board.grid.length}`} icon={<Gamepad2 className="h-5 w-5" />} accent="violet" compact />
-                  <GameStatCard label={t('game.level_reward')} shortLabel={currentLanguage === 'en' ? 'Level reward' : 'Recompensa'} value={String(levelReward)} icon={<Star className="h-5 w-5" />} accent="gold" compact />
+                  <GameStatCard label={t('game.words_found')} shortLabel={currentLanguage === 'en' ? 'Words found' : 'Palabras'} value={`${foundWords.length}/${board.words.length}`} icon={<Target className="h-5 w-5" />} accent="blue" compact isDarkMode={isDarkMode} />
+                  <GameStatCard label={t('game.grid_size')} shortLabel={currentLanguage === 'en' ? 'Board size' : 'Tablero'} value={`${board.grid.length}x${board.grid.length}`} icon={<Gamepad2 className="h-5 w-5" />} accent="violet" compact isDarkMode={isDarkMode} />
+                  <GameStatCard label={t('game.level_reward')} shortLabel={currentLanguage === 'en' ? 'Level reward' : 'Recompensa'} value={String(levelReward)} icon={<Star className="h-5 w-5" />} accent="gold" compact isDarkMode={isDarkMode} />
                 </div>
               </div>
 
@@ -921,29 +921,38 @@ interface GameStatCardProps {
   icon: React.ReactNode;
   accent: 'blue' | 'gold' | 'violet' | 'orange';
   compact?: boolean;
+  isDarkMode: boolean;
 }
 
-function GameStatCard({ label, shortLabel, value, icon, accent, compact = false }: GameStatCardProps) {
+function GameStatCard({ label, shortLabel, value, icon, accent, compact = false, isDarkMode }: GameStatCardProps) {
   const tone = accent === 'gold'
-    ? 'border-[#f6c969]/16 bg-[#f6c969]/10 text-[#ffe39a]'
+    ? isDarkMode
+      ? 'border-[#f6c969]/16 bg-[#f6c969]/10 text-[#ffe39a]'
+      : 'border-[#d4a017]/40 bg-[#f6c969]/15 text-[#b8860b]'
     : accent === 'violet'
-      ? 'border-[#8f7dff]/16 bg-[#8f7dff]/10 text-[#d9d2ff]'
+      ? isDarkMode
+        ? 'border-[#8f7dff]/16 bg-[#8f7dff]/10 text-[#d9d2ff]'
+        : 'border-[#7c3aed]/40 bg-[#8f7dff]/15 text-[#6d28d9]'
       : accent === 'orange'
-        ? 'border-[#ff9b54]/16 bg-[#ff9b54]/10 text-[#ffd6b6]'
-        : 'border-[#4b9eff]/16 bg-[#4b9eff]/10 text-[#d8ecff]';
+        ? isDarkMode
+          ? 'border-[#ff9b54]/16 bg-[#ff9b54]/10 text-[#ffd6b6]'
+          : 'border-[#ea580c]/40 bg-[#ff9b54]/15 text-[#c2410c]'
+        : isDarkMode
+          ? 'border-[#4b9eff]/16 bg-[#4b9eff]/10 text-[#d8ecff]'
+          : 'border-[#2563eb]/40 bg-[#4b9eff]/15 text-[#1d4ed8]';
   const displayLabel = compact && shortLabel ? shortLabel : label;
 
   return (
     <div className={cn('min-w-0 overflow-hidden rounded-[28px] border shadow-sm', tone, compact ? 'p-3.5' : 'p-4')} title={label}>
       <div className={cn('flex min-w-0', compact ? 'items-start gap-2.5' : 'items-center gap-3')}>
-        <div className={cn('flex shrink-0 items-center justify-center rounded-2xl border border-current/15 bg-black/10', compact ? 'h-10 w-10' : 'h-11 w-11')}>
+        <div className={cn('flex shrink-0 items-center justify-center rounded-2xl border border-current/15', isDarkMode ? 'bg-black/10' : 'bg-black/5', compact ? 'h-10 w-10' : 'h-11 w-11')}>
           {icon}
         </div>
         <div className="min-w-0 flex-1">
           <p className={cn('break-words font-sans font-bold uppercase text-current/75 text-pretty', compact ? 'text-[9px] leading-4 tracking-[0.16em]' : 'text-[10px] leading-[1.25] tracking-[0.14em]')}>
             {displayLabel}
           </p>
-          <p className={cn('mt-1 break-words font-serif font-bold text-white', compact ? 'text-[1.75rem] leading-none' : 'text-3xl')}>
+          <p className={cn('mt-1 break-words font-serif font-bold', isDarkMode ? 'text-white' : 'text-[#102542]', compact ? 'text-[1.75rem] leading-none' : 'text-3xl')}>
             {value}
           </p>
         </div>
