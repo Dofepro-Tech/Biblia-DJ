@@ -9,6 +9,7 @@
 - [ ] `version` está actualizado
 - [ ] `publishedAt` tiene fecha actual
 - [ ] `notes` y `notesEn` tienen las últimas correcciones
+- [ ] Script `write-app-update-manifest.mjs` tiene URL correcta como fallback
 
 ### 2. APK
 - [ ] APK reconstruido con cambios más recientes
