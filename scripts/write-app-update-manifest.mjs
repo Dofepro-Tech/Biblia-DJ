@@ -21,7 +21,7 @@ const downloadUrl = (
   process.env.VITE_APP_DOWNLOAD_URL
   || process.env.VITE_PLAY_STORE_URL
   || process.env.VITE_APP_SHARE_URL
-  || 'https://bibliadj.dofepro.do/download.html'
+  || 'https://dofepro-tech.github.io/biblia-dj/'
 ).trim();
 const explicitUpdateUrl = (process.env.VITE_APP_UPDATE_URL || '').trim();
 const explicitApkUrl = (process.env.VITE_APP_APK_URL || '').trim();
@@ -44,9 +44,9 @@ const notesEn = previousManifest.version === version && Array.isArray(previousMa
   ? previousManifest.notesEn.filter((note) => typeof note === 'string' && note.trim().length > 0)
   : [];
 
-const updateUrl = explicitUpdateUrl || (downloadUrl ? new URL('app-update.json', downloadUrl).toString() : '');
+const updateUrl = explicitUpdateUrl || (downloadUrl ? new URL('app-update.json', downloadUrl).toString() : 'https://dofepro-tech.github.io/biblia-dj/app-update.json');
 const apkUrl = explicitApkUrl
-  || 'https://bibliadj.dofepro.do/biblia-ng-android.apk';
+  || 'https://dofepro-tech.github.io/biblia-dj-android.apk';
 
 const manifest = {
   version,

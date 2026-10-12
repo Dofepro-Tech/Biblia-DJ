@@ -1,10 +1,10 @@
 {
   "version": "1.0.18",
   "channel": "stable",
-  "publishedAt": "2026-10-12T19:30:13.676Z",
-  "downloadUrl": "https://bibliadj.dofepro.do/download.html",
-  "apkUrl": "https://bibliadj.dofepro.do/biblia-ng-android.apk",
-  "updateUrl": "https://bibliadj.dofepro.do/app-update.json",
+  "publishedAt": "2026-10-12T19:40:19.586Z",
+  "downloadUrl": "https://dofepro-tech.github.io/biblia-dj/",
+  "apkUrl": "https://dofepro-tech.github.io/biblia-dj-android.apk",
+  "updateUrl": "https://dofepro-tech.github.io/biblia-dj/app-update.json",
   "notes": [
     "Nuevas funciones de Descargar, Guardar en Favoritos y Compartir en la imagen del versículo del día con notificaciones flotantes.",
     "Función mejorada para compartir la app incluyendo el archivo .APK real e información completa con enlaces de descarga directa.",
