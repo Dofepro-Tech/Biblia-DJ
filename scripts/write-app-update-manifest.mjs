@@ -46,7 +46,7 @@ const notesEn = previousManifest.version === version && Array.isArray(previousMa
 
 const updateUrl = explicitUpdateUrl || (downloadUrl ? new URL('app-update.json', downloadUrl).toString() : '');
 const apkUrl = explicitApkUrl
-  || 'https://dofepro-tech.github.io/biblia-dj-android.apk';
+  || 'https://bibliadj.dofepro.do/biblia-ng-android.apk';
 
 const manifest = {
   version,
