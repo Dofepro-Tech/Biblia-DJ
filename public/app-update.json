@@ -1,18 +1,22 @@
 {
   "version": "1.0.18",
   "channel": "stable",
-  "publishedAt": "2026-10-12T19:40:19.586Z",
-  "downloadUrl": "https://dofepro-tech.github.io/biblia-dj/",
-  "apkUrl": "https://dofepro-tech.github.io/biblia-dj-android.apk",
-  "updateUrl": "https://dofepro-tech.github.io/biblia-dj/app-update.json",
+  "publishedAt": "2026-10-13T12:26:25.777Z",
+  "downloadUrl": "https://bibliadj.dofepro.do/download.html",
+  "apkUrl": "https://bibliadj.dofepro.do/biblia-ng-android.apk",
+  "updateUrl": "https://bibliadj.dofepro.do/app-update.json",
   "notes": [
-    "Nuevas funciones de Descargar, Guardar en Favoritos y Compartir en la imagen del versículo del día con notificaciones flotantes.",
-    "Función mejorada para compartir la app incluyendo el archivo .APK real e información completa con enlaces de descarga directa.",
-    "Navegación directa corregida al seleccionar libros, capítulos y versículos desde el lector."
+    "Mejoras de SEO y palabras clave para Google Search Console.",
+    "Expansión de meta keywords con términos relevantes (RVR1960, Biblia en español, etc.).",
+    "Corrección de URLs de imágenes OG y Twitter (de GitHub Pages a Render).",
+    "Mejora de Schema.org con más información (alternateName, inLanguage, keywords).",
+    "Actualización de sitemap.xml con fechas recientes y nuevas páginas."
   ],
   "notesEn": [
-    "New Download, Bookmark, and Share features in the Verse of the Day image with toast notifications.",
-    "Enhanced app share feature including the actual .APK file and complete direct download links.",
-    "Fixed direct navigation when selecting books, chapters, and verses from the reader."
+    "SEO improvements and keywords for Google Search Console.",
+    "Expanded meta keywords with relevant terms (RVR1960, Spanish Bible, etc.).",
+    "Fixed OG and Twitter image URLs (from GitHub Pages to Render).",
+    "Improved Schema.org with more information (alternateName, inLanguage, keywords).",
+    "Updated sitemap.xml with recent dates and new pages."
   ]
 }
