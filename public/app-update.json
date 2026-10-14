@@ -1,10 +1,24 @@
 {
   "version": "1.0.20",
   "channel": "stable",
-  "publishedAt": "2026-10-14T19:17:24.344Z",
-  "downloadUrl": "https://dofepro-tech.github.io/biblia-dj/",
-  "apkUrl": "https://dofepro-tech.github.io/biblia-dj-android.apk",
-  "updateUrl": "https://dofepro-tech.github.io/biblia-dj/app-update.json",
-  "notes": [],
-  "notesEn": []
+  "publishedAt": "2026-10-14T19:45:45.609Z",
+  "downloadUrl": "https://bibliadj.dofepro.do/download.html",
+  "apkUrl": "https://bibliadj.dofepro.do/biblia-ng-android.apk",
+  "updateUrl": "https://bibliadj.dofepro.do/app-update.json",
+  "notes": [
+    "Cambio de nombre de Biblia NG a OmniBiblia en todo el código.",
+    "Nuevo logo con diseño de OmniBiblia (libro, espada y escudo).",
+    "Actualización de iconos, splash screen y favicon.",
+    "Actualización de nombre en toda la aplicación y metadatos.",
+    "Nuevas frases de marca: 'Tu Biblia en Todo Lugar' y 'La Palabra que Transforma Vidas'.",
+    "Corrección de URLs de actualización para apuntar a Render en lugar de GitHub Pages."
+  ],
+  "notesEn": [
+    "Name change from Biblia NG to OmniBiblia throughout the code.",
+    "New OmniBiblia logo design (book, sword and shield).",
+    "Updated icons, splash screen and favicon.",
+    "Updated name throughout the application and metadata.",
+    "New brand phrases: 'Your Bible Everywhere' and 'The Word that Transforms Lives'.",
+    "Fixed update URLs to point to Render instead of GitHub Pages."
+  ]
 }
