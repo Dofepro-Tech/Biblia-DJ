@@ -324,8 +324,8 @@ const resources = {
   es: {
     translation: {
       "app": {
-        "title": "Bíblia NG",
-        "welcome": "Bienvenido a Bíblia NG",
+        "title": "OmniBiblia",
+        "welcome": "Bienvenido a OmniBiblia",
         "description": "Tu espacio sagrado de lectura y reflexión. Comienza buscando un libro arriba o selecciona uno del menú lateral.",
         "search_book": "Buscar libro o palabra...",
         "search_results": "No se encontraron resultados",
