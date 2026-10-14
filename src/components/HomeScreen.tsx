@@ -470,7 +470,7 @@ export function HomeScreen(props: HomeScreenProps) {
             <button onClick={onMenuClick} className="flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-white"><Menu className="h-5 w-5" /></button>
             <div className="flex items-center gap-3">
               <div className="h-11 w-11 p-1.5 bg-[#07152b] rounded-2xl border border-[#1d4f96]"><BrandSeal className="h-full w-full" showWordmark={false} /></div>
-              <div className="min-w-0"><p className="truncate font-serif text-xl font-bold leading-none text-white">{t('app.title')}</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.26em] text-[#7fb8ff]">RV1960</p></div>
+              <div className="min-w-0"><p className="truncate font-serif text-xl font-bold leading-none text-white">{t('app.title')}</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.26em] text-[#7fb8ff]">RVR1960</p></div>
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -502,7 +502,7 @@ export function HomeScreen(props: HomeScreenProps) {
                     <h1 className={cn('font-serif text-base xl:text-xl font-bold transition-colors whitespace-nowrap overflow-hidden', isDarkMode ? 'text-white' : 'text-slate-900')}>
                       {t('app.title')}
                     </h1>
-                    <p className="text-[9px] xl:text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--primary)] leading-none">RV1960</p>
+                    <p className="text-[9px] xl:text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--primary)] leading-none">RVR1960</p>
                   </div>
                 </div>
               </div>
@@ -644,7 +644,7 @@ export function HomeScreen(props: HomeScreenProps) {
                 <div className="hidden md:flex items-center gap-2 border-l border-slate-200 pl-4 pr-2">
                   <select className="bg-transparent text-slate-600 text-sm font-bold outline-none cursor-pointer">
                     <option>Versiones</option>
-                    <option>RV1960</option>
+                    <option>RVR1960</option>
                   </select>
                   <ChevronDown className="h-4 w-4 text-slate-400" />
                 </div>

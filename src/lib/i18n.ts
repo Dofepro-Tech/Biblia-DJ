@@ -84,8 +84,8 @@ const resources = {
         "no_random_verse": "We couldn't load a verse today. Keep exploring the Bible!",
         "link_copied": "Link copied to clipboard",
         "verse_copied": "Verse copied to clipboard",
-        "share_app_message": "Read and share the Bible with Biblia NG.",
-        "share_app_android_apk": "Install Biblia NG on Android with the attached APK.",
+        "share_app_message": "Read and share the Bible with OmniBiblia.",
+        "share_app_android_apk": "Install OmniBiblia on Android with the attached APK.",
         "share_verse": "Share verse",
         "share_verse_image": "Share verse image",
         "share_image": "Share image",
@@ -402,8 +402,8 @@ const resources = {
         "no_random_verse": "No pudimos cargar un versículo hoy. ¡Sigue explorando la Biblia!",
         "link_copied": "Enlace copiado al portapapeles",
         "verse_copied": "Versículo copiado al portapapeles",
-        "share_app_message": "Lee y comparte la Biblia con Bíblia DJ.",
-        "share_app_android_apk": "Instala Bíblia DJ en Android con el APK adjunto.",
+        "share_app_message": "Lee y comparte la Biblia con OmniBiblia.",
+        "share_app_android_apk": "Instala OmniBiblia en Android con el APK adjunto.",
         "share_verse": "Compartir versículo",
         "share_verse_image": "Compartir imagen con versículo",
         "share_image": "Compartir imagen",
@@ -431,7 +431,7 @@ const resources = {
         "values": "Valores",
         "terms": "Términos y Condiciones",
         "privacy": "Política de Privacidad",
-        "about": "Acerca de Bíblia NJ",
+        "about": "Acerca de OmniBiblia",
         "more_options": "Más opciones",
         "settings": "Personalización",
         "dark_mode": "Modo Oscuro",
@@ -457,7 +457,7 @@ const resources = {
         "menu_hint": "Usa el menú lateral para cambiar entre Inicio, Libros, Testamentos, Favoritos, Desafíos diarios, Estudio guiado y el panel del juego bíblico."
       },
       "splash": {
-        "badge": "Abriendo Bíblia NJ",
+        "badge": "Abriendo OmniBiblia",
         "loading": "Preparando tu pantalla principal, tus libros y tu lectura principal con una entrada limpia."
       },
       "settings": {
@@ -542,11 +542,11 @@ const resources = {
         "remove": "Eliminar"
       },
       "about": {
-        "title": "Bíblia NJ",
+        "title": "OmniBiblia",
         "subtitle": "Guiando tu camino hacia la salvación",
         "mission_body": "Proveer herramientas accesibles y confiables que acerquen a cada persona a las Sagradas Escrituras, fomentando la lectura diaria, el estudio con propósito y una vida transformada por la Palabra de Dios.",
         "vision_body": "Ser una referencia digital para el crecimiento cristiano, donde la lectura bíblica, el aprendizaje guiado y los recursos prácticos ayuden a fortalecer la fe con claridad, orden y propósito.",
-        "values_body": "Valores que orientan cada decisión, cada función y cada interacción dentro de Bíblia NJ.",
+        "values_body": "Valores que orientan cada decisión, cada función y cada interacción dentro de OmniBiblia.",
         "values_items": [
           {
             "title": "Amor",
@@ -590,7 +590,7 @@ const resources = {
         "title": "Juego bíblico",
         "subtitle": "Modo interactivo",
         "headline": "Sopa de letras bíblica",
-        "description": "Disfruta un espacio ligero de sopa de letras bíblica con palabras sobre fe, gracia, paz y oración dentro de Bíblia NJ.",
+        "description": "Disfruta un espacio ligero de sopa de letras bíblica con palabras sobre fe, gracia, paz y oración dentro de OmniBiblia.",
         "integration_ready": "Ya en pantalla",
         "panel_title": "Tablero de sopa de letras",
         "panel_body_embedded": "El juego ya está cargado dentro de la app y listo para jugar.",
@@ -621,7 +621,7 @@ const resources = {
         "level_complete_body": "Completaste el nivel {{level}} y sumaste {{reward}} puntos a tu progreso."
       },
       "share_sheet": {
-        "title": "Compartir Bíblia NJ",
+        "title": "Compartir OmniBiblia",
         "subtitle": "Elige dónde quieres enviarla y sigue leyendo junto a otras personas.",
         "share_title": "Compartir imagen",
         "share_subtitle": "Elige una red social, más apps o guardar la imagen.",

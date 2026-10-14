@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Bíblia NG</string>
-    <string name="title_activity_main">Bíblia NG</string>
+    <string name="app_name">OmniBiblia</string>
+    <string name="title_activity_main">OmniBiblia</string>
     <string name="package_name">com.dofepro.bibliang</string>
     <string name="custom_url_scheme">com.dofepro.bibliang</string>
 </resources>

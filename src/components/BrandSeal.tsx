@@ -11,7 +11,7 @@ export function BrandSeal({ className, showWordmark = true }: BrandSealProps) {
     <div className={cn('relative aspect-square', className)}>
       <img
         src={logoUrl}
-        alt="Biblia NG"
+        alt="OmniBiblia"
         loading="lazy"
         decoding="async"
         className={cn('h-full w-full object-contain', !showWordmark && 'scale-[0.98]')}

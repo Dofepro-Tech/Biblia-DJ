@@ -17,7 +17,7 @@ export function HelpGuideModal({ isOpen, onClose, isDarkMode }: HelpGuideModalPr
   const content = currentLanguage.startsWith('en')
     ? {
         title: 'User Guide',
-        subtitle: 'Learn how to get the most out of Biblia NG',
+        subtitle: 'Learn how to get the most out of OmniBiblia',
         sections: [
           {
             icon: <BookOpen className="h-5 w-5 text-blue-400" />,
@@ -45,11 +45,11 @@ export function HelpGuideModal({ isOpen, onClose, isDarkMode }: HelpGuideModalPr
             description: 'Share verses as beautiful images or share the entire app (APK) with your friends even without internet.'
           }
         ],
-        footer: 'Biblia NG is a project dedicated to bringing the Word of God through technology. Thank you for using our app!'
+        footer: 'OmniBiblia is a project dedicated to bringing the Word of God through technology. Thank you for using our app!'
       }
     : {
         title: 'Guía de Usuario',
-        subtitle: 'Aprende a sacar el máximo provecho de Biblia NG',
+        subtitle: 'Aprende a sacar el máximo provecho de OmniBiblia',
         sections: [
           {
             icon: <BookOpen className="h-5 w-5 text-[#4fa8ff]" />,
@@ -77,7 +77,7 @@ export function HelpGuideModal({ isOpen, onClose, isDarkMode }: HelpGuideModalPr
             description: 'Comparte versículos como hermosas imágenes o comparte la app completa (APK) con tus amigos incluso sin internet.'
           }
         ],
-        footer: 'Biblia NG es un proyecto dedicado a llevar la Palabra de Dios a través de la tecnología. ¡Gracias por usarnos!'
+        footer: 'OmniBiblia es un proyecto dedicado a llevar la Palabra de Dios a través de la tecnología. ¡Gracias por usarnos!'
       };
 
   const modalSurface = isDarkMode
