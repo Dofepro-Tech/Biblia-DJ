@@ -578,7 +578,7 @@ const handleHealth: RequestHandler = (_request, response) => {
     timestamp: new Date().toISOString(),
     startedAt: serverStartedAt,
     deploymentMode: existsSync(distIndexPath) ? 'fullstack' : 'api-only',
-    appUrl: process.env.APP_URL ? process.env.APP_URL.split(',').pop().trim() : null,
+    appUrl: process.env.APP_URL ? (process.env.APP_URL.split(',').pop() || '').trim() || null : null,
     ai: {
       provider,
       configured: isAiProviderConfigured(provider),
