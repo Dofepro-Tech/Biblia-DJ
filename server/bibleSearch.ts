@@ -3,7 +3,7 @@ import type { BibleSearchResponse, BibleSearchResult, Book, ChapterData } from '
 import { FALLBACK_BIBLE_BOOKS } from '../src/lib/fallbackBooks.ts';
 
 const BASE_URL = 'https://bible-api.deno.dev/api';
-const API_BIBLE_BASE_URL = 'https://rest.api.bible/v1';
+const API_BIBLE_BASE_URL = 'https://ajphchgh0i.execute-api.us-west-2.amazonaws.com/dev/api';
 const DEFAULT_RESULT_LIMIT = 60;
 const CHAPTER_CONCURRENCY = 6;
 const RVR1909_USX_BASE_URL = 'https://raw.githubusercontent.com/BibleAquifer/ReinaValera1909/main/spa/usx';
@@ -261,32 +261,11 @@ export async function searchBible(query: string, language: string, limit: number
 }
 
 async function searchApiBibleRvr1960(query: string, apiKey: string, bibleId: string, limit: number, offset: number): Promise<BibleSearchResponse> {
-  const searchUrl = new URL(`${API_BIBLE_BASE_URL}/bibles/${encodeURIComponent(bibleId)}/search`);
-  searchUrl.searchParams.set('query', query);
-  searchUrl.searchParams.set('limit', String(limit));
-  searchUrl.searchParams.set('offset', String(offset));
-  searchUrl.searchParams.set('sort', 'canonical');
-
-  const response = await fetch(searchUrl, { headers: { 'api-key': apiKey } });
-  if (!response.ok) {
-    throw new Error(`API.Bible search returned ${response.status}.`);
-  }
-
-  const payload = await response.json() as {
-    data?: {
-      total?: number;
-      verses?: Array<{ id?: string; bookId?: string; chapterId?: string; text?: string; reference?: string }>;
-    };
-  };
-  const verses = payload.data?.verses ?? [];
-  const results = verses.flatMap((verse) => {
-    const bookCode = verse.bookId?.toUpperCase() || verse.id?.split('.').at(0)?.toUpperCase();
-    const bookIndex = bookCode ? RVR1909_BOOK_CODES.indexOf(bookCode) : -1;
-    const book = FALLBACK_BIBLE_BOOKS[bookIndex];
-    const idParts = verse.id?.split('.') ?? [];
-    const chapterParts = verse.chapterId?.split('.') ?? [];
-    const refMatch = verse.reference?.match(/\b(\d+):(\d+)\b/);
-    const chapter = Number(chapterParts.at(-1) || idParts.at(-2) || refMatch?.[1]);
+  // Midvash API does not have a search endpoint
+  // Fall back to local search
+  console.warn('Midvash API does not support search, using local search');
+  throw new Error('Search not available with Midvash API');
+}
     const verseNumber = Number(idParts.at(-1) || refMatch?.[2]);
 
     if (!book || !Number.isInteger(chapter) || !Number.isInteger(verseNumber) || !verse.text) {

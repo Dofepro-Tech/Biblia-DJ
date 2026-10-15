@@ -34,7 +34,7 @@ dotenv.config({ path: path.resolve(projectRoot, '.env') });
 
 const app = express();
 const serverStartedAt = new Date().toISOString();
-const API_BIBLE_BASE_URL = 'https://rest.api.bible/v1';
+const API_BIBLE_BASE_URL = 'https://ajphchgh0i.execute-api.us-west-2.amazonaws.com/dev/api';
 const DEFAULT_ENGLISH_BIBLE_ID = 'de4e12af7f28f599-01';
 const RVR1909_USX_BASE_URL = 'https://raw.githubusercontent.com/BibleAquifer/ReinaValera1909/main/spa/usx';
 const RVR1909_BOOK_CODES = [
@@ -397,44 +397,35 @@ const handleBibleRead: RequestHandler = async (request, response) => {
   }
 
   try {
-    if (language === 'es') {
-      const spanishApiKey = process.env.BIBLE_API_KEY;
-      const spanishBibleId = process.env.BIBLE_API_ES_BIBLE_ID;
-      if (spanishApiKey && spanishBibleId) {
-        return response.json(await fetchApiBibleChapter(book, chapter, spanishApiKey, spanishBibleId));
-      }
-      return response.json(await fetchRvr1909Chapter(book, chapter));
-    }
+    // Use Spanish Bible API (RVR1960, no API key needed)
+    const bookCode = getApiBibleBookId(book);
+    const bibleId = `spa-RVR1960:${bookCode}`;
 
-    const apiKey = process.env.BIBLE_API_KEY;
-    const bibleId = process.env.BIBLE_API_EN_BIBLE_ID || DEFAULT_ENGLISH_BIBLE_ID;
-
-    if (!apiKey || !bibleId) {
-      return sendError(response, 503, 'Bible content is not configured.');
-    }
-
-    const chapterId = `${getApiBibleBookId(book)}.${chapter}`;
-    const bibleResponse = await fetch(
-      `${API_BIBLE_BASE_URL}/bibles/${encodeURIComponent(bibleId)}/chapters/${encodeURIComponent(chapterId)}?content-type=json&include-notes=false&include-titles=true`,
-      { headers: { 'api-key': apiKey } },
-    );
+    const bibleResponse = await fetch(`${API_BIBLE_BASE_URL}/books/${bibleId}/verses/${chapter}`);
     if (!bibleResponse.ok) {
-      throw new Error(`API.Bible returned ${bibleResponse.status}.`);
+      throw new Error(`Spanish Bible API returned ${bibleResponse.status} for ${bookCode} ${chapter}.`);
     }
 
-    const apiResponse = await bibleResponse.json() as { data?: { bookId?: string; number?: string; reference?: string; content?: unknown } };
-    const verses = extractApiBibleVerses(apiResponse.data?.content);
-    if (verses.length === 0) {
-      throw new Error('API.Bible returned a chapter without verses.');
+    const apiResponse = await bibleResponse.json() as Array<{ id: string; cleanText: string; reference: string; text: string; chapterId: string }>;
+
+    if (apiResponse.length === 0) {
+      throw new Error(`Spanish Bible API returned no verses for ${bookCode} ${chapter}.`);
     }
+
+    // Convert to Verse[]
+    const verses: Verse[] = apiResponse.map((verse, index) => ({
+      id: index + 1,
+      number: index + 1,
+      verse: verse.cleanText || verse.text,
+    }));
 
     return response.json({
       testament: '',
-      name: apiResponse.data?.reference?.replace(/\s+\d+$/, '') || book,
+      name: book,
       num_chapters: 0,
       chapter,
       vers: verses,
-      version: 'KJV',
+      version: 'RVR1960',
     });
   } catch (error) {
     console.error('Bible read route error:', error);
@@ -443,24 +434,31 @@ const handleBibleRead: RequestHandler = async (request, response) => {
 };
 
 async function fetchApiBibleChapter(bookName: string, chapter: number, apiKey: string, bibleId: string): Promise<ChapterData> {
-  const chapterId = `${getApiBibleBookId(bookName)}.${chapter}`;
-  const bibleResponse = await fetch(
-    `${API_BIBLE_BASE_URL}/bibles/${encodeURIComponent(bibleId)}/chapters/${encodeURIComponent(chapterId)}?content-type=json&include-notes=false&include-titles=true`,
-    { headers: { 'api-key': apiKey } },
-  );
-  if (!bibleResponse.ok) {
-    throw new Error(`API.Bible chapter request returned ${bibleResponse.status}.`);
+  // Use Spanish Bible API (RVR1960, no API key needed)
+  const bookCode = getApiBibleBookId(bookName);
+  const spanishBibleId = `spa-RVR1960:${bookCode}`;
+
+  const response = await fetch(`${API_BIBLE_BASE_URL}/books/${spanishBibleId}/verses/${chapter}`);
+  if (!response.ok) {
+    throw new Error(`Spanish Bible API returned ${response.status} for ${bookCode} ${chapter}.`);
   }
 
-  const apiResponse = await bibleResponse.json() as { data?: { reference?: string; content?: unknown } };
-  const verses = extractApiBibleVerses(apiResponse.data?.content);
-  if (verses.length === 0) {
-    throw new Error('API.Bible returned a chapter without verses.');
+  const apiResponse = await response.json() as Array<{ id: string; cleanText: string; reference: string; text: string; chapterId: string }>;
+
+  if (apiResponse.length === 0) {
+    throw new Error(`Spanish Bible API returned no verses for ${bookCode} ${chapter}.`);
   }
+
+  // Convert to Verse[]
+  const verses: Verse[] = apiResponse.map((verse, index) => ({
+    id: index + 1,
+    number: index + 1,
+    verse: verse.cleanText || verse.text,
+  }));
 
   return {
     testament: '',
-    name: apiResponse.data?.reference?.replace(/\s+\d+$/, '') || bookName,
+    name: bookName,
     num_chapters: FALLBACK_BIBLE_BOOKS.find((book) => book.names.includes(bookName))?.chapters ?? 0,
     chapter,
     vers: verses,
@@ -469,66 +467,35 @@ async function fetchApiBibleChapter(bookName: string, chapter: number, apiKey: s
 }
 
 async function fetchRvr1909Chapter(bookName: string, chapter: number) {
+  // Use Midvash API instead of USX source
   const bookCode = getApiBibleBookId(bookName);
-  const bookIndex = RVR1909_BOOK_CODES.indexOf(bookCode);
-  if (bookIndex < 0) {
-    throw new Error(`RVR1909 does not recognize book ${bookName}.`);
+  const response = await fetch(`${API_BIBLE_BASE_URL}/rvr1909/${bookCode}/${chapter}`);
+  if (!response.ok) {
+    throw new Error(`Midvash API returned ${response.status} for ${bookCode} ${chapter}.`);
   }
 
-  const paddedBookNumber = String(bookIndex + 1).padStart(2, '0');
-  const cacheKey = `${paddedBookNumber}${bookCode}`;
-  if (!rvr1909BookCache.has(cacheKey)) {
-    rvr1909BookCache.set(cacheKey, (async () => {
-      const sourceResponse = await fetch(`${RVR1909_USX_BASE_URL}/${cacheKey}RV09.usx`);
-      if (!sourceResponse.ok) {
-        throw new Error(`RVR1909 source returned ${sourceResponse.status}.`);
-      }
-      return sourceResponse.text();
-    })().catch((error) => {
-      rvr1909BookCache.delete(cacheKey);
-      throw error;
-    }));
+  const apiResponse = await response.json() as { data?: { verses?: string[] } };
+  const verses = apiResponse.data?.verses || [];
+
+  if (verses.length === 0) {
+    throw new Error(`Midvash API returned no verses for ${bookCode} ${chapter}.`);
   }
 
-  const usx = await rvr1909BookCache.get(cacheKey)!;
-  const chapterStart = new RegExp(`<chapter\\s+number="${chapter}"[^>]*\\/?>`, 'i');
-  const startMatch = chapterStart.exec(usx);
-  if (!startMatch || startMatch.index === undefined) {
-    throw new Error(`RVR1909 chapter ${chapter} was not found.`);
-  }
+  return {
+    testament: '',
+    name: bookName,
+    num_chapters: 0,
+    chapter,
+    vers: verses,
+    version: 'RVR1909',
+  };
+}
 
   const chapterContent = usx.slice(startMatch.index + startMatch[0].length);
   const nextChapterIndex = chapterContent.search(/<chapter\s+number="\d+"[^>]*\/>/i);
   const chapterUsx = nextChapterIndex >= 0 ? chapterContent.slice(0, nextChapterIndex) : chapterContent;
   const verseMatches = Array.from(chapterUsx.matchAll(/<verse\s+number="(\d+)"[^>]*\/>/gi));
   const vers = verseMatches.map((match, index) => {
-    const contentStart = (match.index ?? 0) + match[0].length;
-    const contentEnd = index + 1 < verseMatches.length ? verseMatches[index + 1].index ?? chapterUsx.length : chapterUsx.length;
-    return {
-      id: Number(match[1]),
-      number: Number(match[1]),
-      verse: decodeUsxText(chapterUsx.slice(contentStart, contentEnd)),
-    };
-  }).filter((verse) => verse.verse);
-
-  if (vers.length === 0) {
-    throw new Error(`RVR1909 chapter ${chapter} has no verses.`);
-  }
-
-  return { testament: '', name: bookName, num_chapters: 0, chapter, vers, version: 'RVR1909' };
-}
-
-function decodeUsxText(value: string) {
-  return value
-    .replace(/<note[\s\S]*?<\/note>/gi, '')
-    .replace(/<[^>]+>/g, '')
-    .replace(/&quot;/g, '"')
-    .replace(/&apos;/g, "'")
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/\s+/g, ' ')
-    .trim();
 }
 
 function getApiBibleBookId(bookName: string) {
