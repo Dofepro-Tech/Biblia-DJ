@@ -34,7 +34,7 @@ dotenv.config({ path: path.resolve(projectRoot, '.env') });
 
 const app = express();
 const serverStartedAt = new Date().toISOString();
-const API_BIBLE_BASE_URL = 'https://ajphchgh0i.execute-api.us-west-2.amazonaws.com/dev/api';
+const API_BIBLE_BASE_URL = 'https://api.midvash.com/v1';
 const DEFAULT_ENGLISH_BIBLE_ID = 'de4e12af7f28f599-01';
 const RVR1909_USX_BASE_URL = 'https://raw.githubusercontent.com/BibleAquifer/ReinaValera1909/main/spa/usx';
 const RVR1909_BOOK_CODES = [
@@ -397,26 +397,27 @@ const handleBibleRead: RequestHandler = async (request, response) => {
   }
 
   try {
-    // Use Spanish Bible API (RVR1960, no API key needed)
+    // Use Midvash API (RVG - Reina-Valera Gómez 2010, similar a RVR1960)
     const bookCode = getApiBibleBookId(book);
-    const bibleId = `spa-RVR1960:${bookCode}`;
+    const version = 'rvg'; // Reina-Valera Gómez 2010 (más moderna que RVR1960)
 
-    const bibleResponse = await fetch(`${API_BIBLE_BASE_URL}/books/${bibleId}/verses/${chapter}`);
+    const bibleResponse = await fetch(`${API_BIBLE_BASE_URL}/${version}/${bookCode}/${chapter}`);
     if (!bibleResponse.ok) {
-      throw new Error(`Spanish Bible API returned ${bibleResponse.status} for ${bookCode} ${chapter}.`);
+      throw new Error(`Midvash API returned ${bibleResponse.status} for ${bookCode} ${chapter}.`);
     }
 
-    const apiResponse = await bibleResponse.json() as Array<{ id: string; cleanText: string; reference: string; text: string; chapterId: string }>;
+    const apiResponse = await bibleResponse.json() as { data?: { verses?: string[] } };
+    const versesStrings = apiResponse.data?.verses || [];
 
-    if (apiResponse.length === 0) {
-      throw new Error(`Spanish Bible API returned no verses for ${bookCode} ${chapter}.`);
+    if (versesStrings.length === 0) {
+      throw new Error(`Midvash API returned no verses for ${bookCode} ${chapter}.`);
     }
 
-    // Convert to Verse[]
-    const verses: Verse[] = apiResponse.map((verse, index) => ({
+    // Convert string[] to Verse[]
+    const verses: Verse[] = versesStrings.map((text, index) => ({
       id: index + 1,
       number: index + 1,
-      verse: verse.cleanText || verse.text,
+      verse: text,
     }));
 
     return response.json({
@@ -425,7 +426,7 @@ const handleBibleRead: RequestHandler = async (request, response) => {
       num_chapters: 0,
       chapter,
       vers: verses,
-      version: 'RVR1960',
+      version: 'RVG',
     });
   } catch (error) {
     console.error('Bible read route error:', error);
@@ -434,26 +435,27 @@ const handleBibleRead: RequestHandler = async (request, response) => {
 };
 
 async function fetchApiBibleChapter(bookName: string, chapter: number, apiKey: string, bibleId: string): Promise<ChapterData> {
-  // Use Spanish Bible API (RVR1960, no API key needed)
+  // Use Midvash API (RVG - Reina-Valera Gómez 2010)
   const bookCode = getApiBibleBookId(bookName);
-  const spanishBibleId = `spa-RVR1960:${bookCode}`;
+  const version = 'rvg'; // Reina-Valera Gómez 2010
 
-  const response = await fetch(`${API_BIBLE_BASE_URL}/books/${spanishBibleId}/verses/${chapter}`);
+  const response = await fetch(`${API_BIBLE_BASE_URL}/${version}/${bookCode}/${chapter}`);
   if (!response.ok) {
-    throw new Error(`Spanish Bible API returned ${response.status} for ${bookCode} ${chapter}.`);
+    throw new Error(`Midvash API returned ${response.status} for ${bookCode} ${chapter}.`);
   }
 
-  const apiResponse = await response.json() as Array<{ id: string; cleanText: string; reference: string; text: string; chapterId: string }>;
+  const apiResponse = await response.json() as { data?: { verses?: string[] } };
+  const versesStrings = apiResponse.data?.verses || [];
 
-  if (apiResponse.length === 0) {
-    throw new Error(`Spanish Bible API returned no verses for ${bookCode} ${chapter}.`);
+  if (versesStrings.length === 0) {
+    throw new Error(`Midvash API returned no verses for ${bookCode} ${chapter}.`);
   }
 
-  // Convert to Verse[]
-  const verses: Verse[] = apiResponse.map((verse, index) => ({
+  // Convert string[] to Verse[]
+  const verses: Verse[] = versesStrings.map((text, index) => ({
     id: index + 1,
     number: index + 1,
-    verse: verse.cleanText || verse.text,
+    verse: text,
   }));
 
   return {
@@ -462,7 +464,7 @@ async function fetchApiBibleChapter(bookName: string, chapter: number, apiKey: s
     num_chapters: FALLBACK_BIBLE_BOOKS.find((book) => book.names.includes(bookName))?.chapters ?? 0,
     chapter,
     vers: verses,
-    version: 'RVR1960',
+    version: 'RVG',
   };
 }
 

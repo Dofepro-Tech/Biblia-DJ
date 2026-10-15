@@ -3,7 +3,7 @@ import type { BibleSearchResponse, BibleSearchResult, Book, ChapterData } from '
 import { FALLBACK_BIBLE_BOOKS } from '../src/lib/fallbackBooks.ts';
 
 const BASE_URL = 'https://bible-api.deno.dev/api';
-const API_BIBLE_BASE_URL = 'https://ajphchgh0i.execute-api.us-west-2.amazonaws.com/dev/api';
+const API_BIBLE_BASE_URL = 'https://api.midvash.com/v1';
 const DEFAULT_RESULT_LIMIT = 60;
 const CHAPTER_CONCURRENCY = 6;
 const RVR1909_USX_BASE_URL = 'https://raw.githubusercontent.com/BibleAquifer/ReinaValera1909/main/spa/usx';
