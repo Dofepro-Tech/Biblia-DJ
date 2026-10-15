@@ -7,7 +7,7 @@ import dotenv from 'dotenv';
 import express from 'express';
 import type { Request, RequestHandler, Response } from 'express';
 import { getBibleVersion, normalizeAppLanguage } from '../src/lib/language.ts';
-import type { ChapterData, ChatMessage, StudyStep } from '../src/types.ts';
+import type { ChapterData, ChatMessage, StudyStep, Verse } from '../src/types.ts';
 import {
   generateAiText,
   getAiErrorDetails,
@@ -487,15 +487,8 @@ async function fetchRvr1909Chapter(bookName: string, chapter: number) {
     num_chapters: 0,
     chapter,
     vers: verses,
-    version: 'RVR1909',
+    version: 'RVR1960',
   };
-}
-
-  const chapterContent = usx.slice(startMatch.index + startMatch[0].length);
-  const nextChapterIndex = chapterContent.search(/<chapter\s+number="\d+"[^>]*\/>/i);
-  const chapterUsx = nextChapterIndex >= 0 ? chapterContent.slice(0, nextChapterIndex) : chapterContent;
-  const verseMatches = Array.from(chapterUsx.matchAll(/<verse\s+number="(\d+)"[^>]*\/>/gi));
-  const vers = verseMatches.map((match, index) => {
 }
 
 function getApiBibleBookId(bookName: string) {
