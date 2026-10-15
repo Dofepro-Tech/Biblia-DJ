@@ -11,7 +11,8 @@
     "Actualización de iconos, splash screen y favicon.",
     "Actualización de nombre en toda la aplicación y metadatos.",
     "Nuevas frases de marca: 'Tu Biblia en Todo Lugar' y 'La Palabra que Transforma Vidas'.",
-    "Corrección de URLs de actualización para apuntar a Render en lugar de GitHub Pages."
+    "Corrección de URLs de actualización para apuntar a Render en lugar de GitHub Pages.",
+    "Configuración de Spanish Bible API para usar RVR1960 en español (sin API key)."
   ],
   "notesEn": [
     "Name change from Biblia NG to OmniBiblia throughout the code.",
@@ -19,6 +20,7 @@
     "Updated icons, splash screen and favicon.",
     "Updated name throughout the application and metadata.",
     "New brand phrases: 'Your Bible Everywhere' and 'The Word that Transforms Lives'.",
-    "Fixed update URLs to point to Render instead of GitHub Pages."
+    "Fixed update URLs to point to Render instead of GitHub Pages.",
+    "Configured Spanish Bible API to use RVR1960 in Spanish (no API key)."
   ]
 }
